@@ -14,6 +14,7 @@
 
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 import Fastify from 'fastify';
@@ -94,16 +95,37 @@ function wantedFormat(req) {
 }
 
 /* ------------------------------------------------------------------ *
+ * The page
+ * ------------------------------------------------------------------ */
+
+const INDEX_HTML = readFileSync(path.join(PUBLIC_DIR, 'index.html'), 'utf8');
+const FAVICON = readFileSync(path.join(PUBLIC_DIR, 'favicon.ico'));
+
+/* ------------------------------------------------------------------ *
  * Security headers
  * ------------------------------------------------------------------ */
 
+/**
+ * The page carries one inline script — the analytics bootstrap. Rather than
+ * opening the policy with 'unsafe-inline', its hash is computed from the file
+ * at startup, so editing that script cannot silently break it or widen the
+ * policy for anything else.
+ */
+const inlineScriptHashes = [...INDEX_HTML.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)]
+  .filter(match => !/type=["']application\/ld\+json["']/i.test(match[0]))
+  .map(match => `'sha256-${createHash('sha256').update(match[1], 'utf8').digest('base64')}'`);
+
+/** Analytics is the only third party the page talks to. */
+const METRIKA = 'https://mc.yandex.ru https://mc.yandex.com';
+
 const CSP = [
   "default-src 'self'",
-  "script-src 'self'",
+  ['script-src', "'self'", ...inlineScriptHashes, METRIKA].join(' '),
   "style-src 'self'",
-  "img-src 'self' data:",
+  `img-src 'self' data: ${METRIKA}`,
   "font-src 'self'",
-  "connect-src 'self'",
+  `connect-src 'self' ${METRIKA}`,
+  `frame-src ${METRIKA}`,
   "base-uri 'none'",
   "form-action 'none'",
   "frame-ancestors 'none'",
@@ -166,9 +188,6 @@ await app.register(fastifyStatic, {
   immutable: false,
   dotfiles: 'deny',
 });
-
-const INDEX_HTML = readFileSync(path.join(PUBLIC_DIR, 'index.html'), 'utf8');
-const FAVICON = readFileSync(path.join(PUBLIC_DIR, 'favicon.ico'));
 
 /** Values from the dictionary end up inside attributes, so they are escaped. */
 function escapeHtml(value) {

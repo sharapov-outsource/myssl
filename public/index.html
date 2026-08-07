@@ -13,8 +13,8 @@
   <meta name="robots" content="%ROBOTS%" id="meta-robots">
   <link rel="canonical" href="%URL%" id="link-canonical">
 
-  <meta name="theme-color" content="#0a0e16" media="(prefers-color-scheme: dark)">
-  <meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14110c" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f9f4ea" media="(prefers-color-scheme: light)">
   <meta name="application-name" content="SSL Test">
   <meta name="apple-mobile-web-app-title" content="SSL Test">
   <meta name="format-detection" content="telephone=no">
@@ -73,7 +73,14 @@
 
   <header>
     <div class="brand">
-      <div class="logo">🔒</div>
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+          <rect class="tile" width="1024" height="1024" rx="336"/>
+          <path class="glyph" d="M336 552V456a176 176 0 0 1 352 0v96" fill="none" stroke-width="88" stroke-linecap="round"/>
+          <rect class="glyph" x="248" y="520" width="528" height="376" rx="104"/>
+          <path class="keyhole" d="M512 636a56 56 0 0 0-28 104.5V784a28 28 0 0 0 56 0v-43.5A56 56 0 0 0 512 636Z"/>
+        </svg>
+      </span>
       <div>
         <h1 data-i18n="h1">SSL Test</h1>
         <div class="sub" data-i18n="subtitle"></div>
@@ -81,9 +88,9 @@
     </div>
     <div class="tools">
       <select id="lang" aria-label="Language"></select>
-      <button id="btn-rescan"><span aria-hidden="true">↻</span><span data-i18n="btn_rescan"></span></button>
-      <button id="btn-copy-json"><span aria-hidden="true">⧉</span><span data-i18n="btn_copy_json"></span></button>
-      <button id="btn-save-json"><span aria-hidden="true">↓</span><span data-i18n="btn_save_json"></span></button>
+      <button id="btn-rescan"><span class="mark" aria-hidden="true">↻</span><span data-i18n="btn_rescan"></span></button>
+      <button id="btn-copy-json"><span class="mark" aria-hidden="true">⧉</span><span data-i18n="btn_copy_json"></span></button>
+      <button id="btn-save-json"><span class="mark" aria-hidden="true">↓</span><span data-i18n="btn_save_json"></span></button>
       <a class="ghlink" href="https://github.com/sharapov-outsource/myssl"
          target="_blank" rel="noopener noreferrer">
         <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
@@ -95,7 +102,7 @@
   <form class="search" id="search-form">
     <input id="search-host" type="text" inputmode="url" spellcheck="false" autocomplete="off"
            placeholder="example.com · example.com:8443" aria-label="Host">
-    <button type="submit" class="primary" id="btn-scan"><span aria-hidden="true">🔍</span><span data-i18n="btn_scan"></span></button>
+    <button type="submit" class="primary" id="btn-scan"><span data-i18n="btn_scan"></span></button>
   </form>
 
   <section class="hero" id="hero">
@@ -121,7 +128,7 @@
   <main class="grid" id="report" hidden>
 
     <section class="card">
-      <h2><span class="ico" aria-hidden="true">📊</span><span data-i18n="card_grade"></span></h2>
+      <h2><span data-i18n="card_grade"></span></h2>
       <div class="meter"><span class="k" data-i18n="k_protocol_support"></span><span class="bar"><i id="bar-protocol"></i></span><span class="v" id="score-protocol"></span></div>
       <div class="meter"><span class="k" data-i18n="k_key_exchange"></span><span class="bar"><i id="bar-kex"></i></span><span class="v" id="score-kex"></span></div>
       <div class="meter"><span class="k" data-i18n="k_cipher_strength"></span><span class="bar"><i id="bar-cipher"></i></span><span class="v" id="score-cipher"></span></div>
@@ -134,7 +141,7 @@
     </section>
 
     <section class="card">
-      <h2><span class="ico" aria-hidden="true">📜</span><span data-i18n="card_cert"></span></h2>
+      <h2><span data-i18n="card_cert"></span></h2>
       <div class="row"><span class="k" data-i18n="k_common_name"></span><span class="v skeleton big" id="cert-cn"></span></div>
       <div class="row"><span class="k" data-i18n="k_issuer"></span><span class="v skeleton" id="cert-issuer"></span></div>
       <div class="row"><span class="k" data-i18n="k_valid_from"></span><span class="v skeleton" id="cert-from"></span></div>
@@ -150,7 +157,7 @@
     </section>
 
     <section class="card">
-      <h2><span class="ico" aria-hidden="true">🔗</span><span data-i18n="card_chain"></span></h2>
+      <h2><span data-i18n="card_chain"></span></h2>
       <div class="row"><span class="k" data-i18n="k_trusted"></span><span class="v skeleton" id="chain-trusted"></span></div>
       <div class="row"><span class="k" data-i18n="k_chain_complete"></span><span class="v skeleton" id="chain-complete"></span></div>
       <div class="row"><span class="k" data-i18n="k_trust_anchor"></span><span class="v skeleton" id="chain-anchor"></span></div>
@@ -163,14 +170,14 @@
     </section>
 
     <section class="card">
-      <h2><span class="ico" aria-hidden="true">🛡</span><span data-i18n="card_protocols"></span></h2>
+      <h2><span data-i18n="card_protocols"></span></h2>
       <div id="protocol-rows"></div>
       <div class="row"><span class="k" data-i18n="k_negotiated"></span><span class="v skeleton" id="proto-negotiated"></span></div>
       <div class="note" data-i18n="note_protocols"></div>
     </section>
 
     <section class="card">
-      <h2><span class="ico" aria-hidden="true">🔑</span><span data-i18n="card_kex"></span></h2>
+      <h2><span data-i18n="card_kex"></span></h2>
       <div class="row"><span class="k" data-i18n="k_groups"></span><span class="v skeleton" id="kex-groups"></span></div>
       <div class="row"><span class="k" data-i18n="k_ephemeral"></span><span class="v skeleton" id="kex-ephemeral"></span></div>
       <div class="row"><span class="k" data-i18n="k_dh"></span><span class="v skeleton" id="kex-dh"></span></div>
@@ -179,7 +186,7 @@
     </section>
 
     <section class="card">
-      <h2><span class="ico" aria-hidden="true">⚙️</span><span data-i18n="card_features"></span></h2>
+      <h2><span data-i18n="card_features"></span></h2>
       <div class="row"><span class="k" data-i18n="k_alpn"></span><span class="v skeleton" id="f-alpn"></span></div>
       <div class="row"><span class="k" data-i18n="k_http2"></span><span class="v skeleton" id="f-http2"></span></div>
       <div class="row"><span class="k" data-i18n="k_ocsp_stapling"></span><span class="v skeleton" id="f-ocsp"></span></div>
@@ -196,7 +203,7 @@
     </section>
 
     <section class="card">
-      <h2><span class="ico" aria-hidden="true">🌐</span><span data-i18n="card_http"></span></h2>
+      <h2><span data-i18n="card_http"></span></h2>
       <div class="row"><span class="k" data-i18n="k_http_status"></span><span class="v skeleton" id="h-status"></span></div>
       <div class="row"><span class="k" data-i18n="k_http_redirect"></span><span class="v skeleton" id="h-redirect"></span></div>
       <div class="row"><span class="k" data-i18n="k_hsts"></span><span class="v skeleton" id="h-hsts"></span></div>
@@ -211,7 +218,7 @@
     </section>
 
     <section class="card">
-      <h2><span class="ico" aria-hidden="true">📇</span><span data-i18n="card_dns"></span></h2>
+      <h2><span data-i18n="card_dns"></span></h2>
       <div class="row"><span class="k" data-i18n="k_ipv4"></span><span class="v skeleton" id="d-a"></span></div>
       <div class="row"><span class="k" data-i18n="k_ipv6"></span><span class="v skeleton" id="d-aaaa"></span></div>
       <div class="row"><span class="k" data-i18n="k_ptr"></span><span class="v skeleton" id="d-ptr"></span></div>
@@ -221,19 +228,19 @@
     </section>
 
     <section class="card wide">
-      <h2><span class="ico" aria-hidden="true">⚠️</span><span data-i18n="card_vulns"></span></h2>
+      <h2><span data-i18n="card_vulns"></span></h2>
       <div id="vuln-list" class="findings"></div>
       <div class="note" data-i18n="note_vulns"></div>
     </section>
 
     <section class="card wide">
-      <h2><span class="ico" aria-hidden="true">🧮</span><span data-i18n="card_ciphers"></span></h2>
+      <h2><span data-i18n="card_ciphers"></span></h2>
       <div id="cipher-blocks"></div>
       <div class="note" data-i18n="note_ciphers"></div>
     </section>
 
     <section class="card wide">
-      <h2><span class="ico" aria-hidden="true">🤝</span><span data-i18n="card_sim"></span></h2>
+      <h2><span data-i18n="card_sim"></span></h2>
       <div class="table-wrap">
         <table class="table" id="sim-table">
           <thead><tr>
@@ -249,7 +256,7 @@
     </section>
 
     <section class="card wide">
-      <h2><span class="ico" aria-hidden="true">🧾</span><span data-i18n="card_raw"></span></h2>
+      <h2><span data-i18n="card_raw"></span></h2>
       <pre class="raw" id="raw-json">…</pre>
     </section>
 

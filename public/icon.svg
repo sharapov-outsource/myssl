@@ -1,12 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="myssl">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#38bdf8"/>
-      <stop offset="1" stop-color="#818cf8"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="15" fill="url(#g)"/>
-  <path d="M32 13c-6.1 0-11 4.9-11 11v5h6v-5c0-2.8 2.2-5 5-5s5 2.2 5 5v5h6v-5c0-6.1-4.9-11-11-11z" fill="#fff"/>
-  <rect x="17.5" y="28.5" width="29" height="22" rx="4" fill="#fff"/>
-  <path d="M32 34.5a2.9 2.9 0 0 0-1.5 5.4V44a1.5 1.5 0 0 0 3 0v-4.1a2.9 2.9 0 0 0-1.5-5.4z" fill="url(#g)"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="myssl">
+  <title>myssl</title>
+  <!-- Same silhouette as the sharapov.biz mark: a tile with a single glyph and
+       one indigo accent. The tile inverts on a dark ground so the mark does not
+       vanish into a dark browser chrome. -->
+  <style>
+    .tile { fill: #14110C }
+    .glyph { fill: #F5EFE2; stroke: #F5EFE2 }
+    @media (prefers-color-scheme: dark) {
+      .tile { fill: #F5EFE2 }
+      .glyph { fill: #14110C; stroke: #14110C }
+    }
+  </style>
+  <rect class="tile" width="1024" height="1024" rx="336"/>
+  <path class="glyph" d="M336 552V456a176 176 0 0 1 352 0v96" fill="none" stroke-width="88" stroke-linecap="round"/>
+  <rect class="glyph" x="248" y="520" width="528" height="376" rx="104" stroke="none"/>
+  <path d="M512 636a56 56 0 0 0-28 104.5V784a28 28 0 0 0 56 0v-43.5A56 56 0 0 0 512 636Z" fill="#3A3AA6"/>
 </svg>

@@ -94,9 +94,12 @@ function encodeIco(png, size) {
  * Drawing
  * ------------------------------------------------------------------ */
 
-const ACCENT = [0x38, 0xbd, 0xf8];
-const ACCENT2 = [0x81, 0x8c, 0xf8];
-const BACKDROP = [0x0a, 0x0e, 0x16];
+/* Palette from the sharapov.biz design system. */
+const INK = [0x14, 0x11, 0x0c];
+const PAPER = [0xf5, 0xef, 0xe2];
+const BRAND = [0x3a, 0x3a, 0xa6];
+const BG = [0xf9, 0xf4, 0xea];
+const WASH_INDIGO = [0xd8, 0xd8, 0xf2];
 
 /** Supersampling: every pixel is averaged over SS × SS sub-samples. */
 const SS = 4;
@@ -112,49 +115,34 @@ function roundedRect(x, y, cx, cy, halfWidth, halfHeight, radius) {
 }
 
 /**
- * The mark: a rounded square in the brand gradient with a padlock cut into it.
- * `size` is the canvas edge; `pad` leaves room around the badge.
+ * The mark, in the same proportions as public/icon.svg: an ink tile carrying a
+ * paper-coloured padlock with the one indigo accent in its keyhole.
  *
+ * @param {number} size canvas edge
  * @returns {(x:number, y:number) => [number,number,number,number]|null}
- *   colour at a point, or null where the badge is not drawn
  */
-function padlockBadge(size, { pad = 0 } = {}) {
-  const badge = size - pad * 2;
-  const cx = size / 2;
-  const cy = size / 2;
-  const radius = badge * 0.235;
-
-  const bodyHalfW = badge * 0.225;
-  const bodyHalfH = badge * 0.165;
-  const bodyCy = cy + badge * 0.115;
-  const bodyRadius = badge * 0.055;
-
-  const shackleCy = cy - badge * 0.085;
-  const shackleOuter = badge * 0.175;
-  const shackleInner = badge * 0.105;
-
-  const keyholeCy = bodyCy - badge * 0.02;
-  const keyholeR = badge * 0.038;
+function padlockBadge(size) {
+  const u = size / 1024;                       // the SVG is drawn at 1024
+  const at = value => value * u;
 
   return (x, y) => {
-    if (roundedRect(x, y, cx, cy, badge / 2, badge / 2, radius) > 0) return null;
+    if (roundedRect(x, y, size / 2, size / 2, size / 2, size / 2, at(336)) > 0) return null;
 
-    // Diagonal gradient across the badge.
-    const t = Math.min(1, Math.max(0, ((x - pad) / badge + (y - pad) / badge) / 2));
-    const base = mix(ACCENT, ACCENT2, t);
+    // Shackle: a stroked arc, so the test is distance to its centre line.
+    const ring = Math.hypot(x - at(512), y - at(456));
+    const inShackle = y <= at(456) && Math.abs(ring - at(176)) <= at(44);
+    // Its legs run straight down to where the body swallows them.
+    const inLegs = y > at(456) && y <= at(552) &&
+      (Math.abs(x - at(336)) <= at(44) || Math.abs(x - at(688)) <= at(44));
+    const inBody = roundedRect(x, y, at(512), at(708), at(264), at(188), at(104)) <= 0;
 
-    const inBody = roundedRect(x, y, cx, bodyCy, bodyHalfW, bodyHalfH, bodyRadius) <= 0;
-    const ringDistance = Math.hypot(x - cx, y - shackleCy);
-    const inShackle = y <= shackleCy &&
-      ringDistance <= shackleOuter && ringDistance >= shackleInner;
-
-    if (inBody || inShackle) {
-      const keyhole = Math.hypot(x - cx, y - keyholeCy) <= keyholeR ||
-        (Math.abs(x - cx) <= keyholeR * 0.42 &&
-         y >= keyholeCy && y <= keyholeCy + badge * 0.075);
-      return keyhole ? [...base, 255] : [255, 255, 255, 255];
+    if (inBody) {
+      const keyholeRound = Math.hypot(x - at(512), y - at(692)) <= at(56);
+      const keyholeStem = Math.abs(x - at(512)) <= at(28) && y >= at(692) && y <= at(812);
+      return keyholeRound || keyholeStem ? [...BRAND, 255] : [...PAPER, 255];
     }
-    return [...base, 255];
+    if (inShackle || inLegs) return [...PAPER, 255];
+    return [...INK, 255];
   };
 }
 
@@ -194,28 +182,13 @@ function render(width, height, paint, background = [0, 0, 0, 0]) {
  * The files
  * ------------------------------------------------------------------ */
 
-/** The scalable version, which is what browsers actually use these days. */
-const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="myssl">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#38bdf8"/>
-      <stop offset="1" stop-color="#818cf8"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="15" fill="url(#g)"/>
-  <path d="M32 13c-6.1 0-11 4.9-11 11v5h6v-5c0-2.8 2.2-5 5-5s5 2.2 5 5v5h6v-5c0-6.1-4.9-11-11-11z" fill="#fff"/>
-  <rect x="17.5" y="28.5" width="29" height="22" rx="4" fill="#fff"/>
-  <path d="M32 34.5a2.9 2.9 0 0 0-1.5 5.4V44a1.5 1.5 0 0 0 3 0v-4.1a2.9 2.9 0 0 0-1.5-5.4z" fill="url(#g)"/>
-</svg>
-`;
-
 function write(name, data) {
   writeFileSync(path.join(PUBLIC_DIR, name), data);
   console.log(`  ${name.padEnd(22)} ${String(data.length).padStart(7)} bytes`);
 }
 
 console.log('writing icons into public/');
-write('icon.svg', ICON_SVG);
+console.log('  icon.svg is hand-written and left alone');
 
 for (const [name, size] of [['apple-touch-icon.png', 180], ['icon-512.png', 512], ['icon-192.png', 192]]) {
   write(name, encodePng(size, size, render(size, size, padlockBadge(size))));
@@ -236,11 +209,9 @@ write('og-image.png', encodePng(OG_WIDTH, OG_HEIGHT, render(OG_WIDTH, OG_HEIGHT,
   const inside = badge(x - badgeX, y - badgeY);
   if (inside) return inside;
 
-  // The same two glows the page draws behind its content.
-  const glow = (gx, gy, radius, strength) =>
-    Math.max(0, 1 - Math.hypot((x - gx) / radius, (y - gy) / (radius * 0.55))) * strength;
-  const light = glow(OG_WIDTH * 0.18, -60, 620, 0.30) + glow(OG_WIDTH * 0.86, -30, 520, 0.26);
-  return [...mix(BACKDROP, mix(ACCENT, ACCENT2, 0.5), Math.min(0.5, light)), 255];
+  // The page wash: an indigo glow top-right over warm paper.
+  const glow = Math.max(0, 1 - Math.hypot((x - OG_WIDTH) / 760, y / 420));
+  return [...mix(BG, WASH_INDIGO, Math.min(1, glow * 1.1)), 255];
 })));
 
 console.log('done');

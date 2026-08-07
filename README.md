@@ -310,6 +310,18 @@ and `LANG_LOCALES`.
 read from `server/vulns.js`, `server/grade.js`, `server/cert.js` and the file
 names in `server/roots/`.
 
+## Design
+
+The page follows the sharapov.biz design system: warm paper ground with an
+indigo wash, graphite ink, one accent colour used sparingly, Geist for display
+type, Inter for body, JetBrains Mono for everything technical. The dark theme is
+the same palette turned over.
+
+Fonts are served from `public/fonts` rather than a CDN, so `font-src` stays
+`'self'` and the page makes no third-party request for them. `scripts/make-icons.js`
+regenerates the raster icons and the social preview from the same mark as
+`public/icon.svg`.
+
 ## Layout
 
 ```
@@ -329,7 +341,7 @@ server/
   vulns.js        known weaknesses, derived from the observed configuration
   grade.js        the letter grade
   i18n.js         labels for the API and the page head
-public/           the page and its assets; no framework, no build step
+public/           the page, icons and self-hosted fonts; no framework, no build step
 scripts/          CLI scan, smoke test, translation check, icon generator
 test/             unit tests and end-to-end scans of a local server
 ```
@@ -661,6 +673,18 @@ TLS-сервер на петлевом интерфейсе и сканирую�
 вычитываются из `server/vulns.js`, `server/grade.js`, `server/cert.js` и имён
 файлов в `server/roots/`.
 
+### Оформление
+
+Страница следует дизайн-системе sharapov.biz: тёплая бумага с индиговым
+подсветом, графитовые чернила, один акцентный цвет в малых дозах, Geist для
+заголовков, Inter для текста, JetBrains Mono для всего технического. Тёмная тема
+— та же палитра наизнанку.
+
+Шрифты отдаются из `public/fonts`, а не с CDN, поэтому `font-src` остаётся
+`'self'` и страница не делает за ними сторонних запросов.
+`scripts/make-icons.js` пересобирает растровые иконки и превью для соцсетей из
+того же знака, что и `public/icon.svg`.
+
 ### Структура
 
 ```
@@ -680,7 +704,7 @@ server/
   vulns.js        известные слабости, выведенные из наблюдаемых настроек
   grade.js        итоговая оценка
   i18n.js         подписи для API и головы страницы
-public/           страница и ассеты; без фреймворков и сборки
+public/           страница, иконки и локальные шрифты; без фреймворков и сборки
 scripts/          скан из консоли, smoke-тест, проверка переводов, генератор иконок
 test/             модульные тесты и сквозные сканы локального сервера
 ```

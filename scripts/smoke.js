@@ -143,13 +143,18 @@ async function run() {
   const csp = page.headers.get('content-security-policy') || '';
   check('csp: script-src self', csp.includes("script-src 'self'"));
   check('csp: frame-ancestors none', csp.includes("frame-ancestors 'none'"));
+  // The inline analytics bootstrap is admitted by hash, never by 'unsafe-inline'.
+  check('csp: no unsafe-inline', !csp.includes('unsafe-inline'), csp);
+  check('csp: inline script allowed by hash', /script-src[^;]*'sha256-/.test(csp), csp);
+  check('csp: fonts are first-party', /font-src 'self'(;|$)/.test(csp), csp);
   check('header nosniff', page.headers.get('x-content-type-options') === 'nosniff');
   check('header X-Frame-Options', page.headers.get('x-frame-options') === 'DENY');
   check('header referrer-policy', Boolean(page.headers.get('referrer-policy')));
 
   // Static assets and directory traversal protection.
   for (const file of ['styles.css', 'app.js', 'i18n.js', 'sharapov.svg',
-    'icon.svg', 'apple-touch-icon.png', 'og-image.png', 'site.webmanifest']) {
+    'icon.svg', 'apple-touch-icon.png', 'og-image.png', 'site.webmanifest',
+    'fonts/inter-latin.woff2', 'fonts/jetbrains-mono-latin.woff2', 'fonts/geist-latin.woff2']) {
     const res = await fetch(`${base}/static/${file}`);
     check(`static ${file}`, res.ok, `status ${res.status}`);
   }
