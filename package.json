@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
-  "homepage": "https://ssltest.sharapov.biz",
+  "homepage": "https://myssl.sharapov.biz",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sharapov-outsource/myssl.git"

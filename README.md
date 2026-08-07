@@ -9,10 +9,10 @@ Built the same way as [myip](https://github.com/sharapov-outsource/myip): one
 small Fastify server, no build step, no database, a page that works without a
 framework, and the same report available as JSON or YAML for the command line.
 
-**Live:** <https://ssltest.sharapov.biz>
+**Live:** <https://myssl.sharapov.biz>
 
 ```bash
-curl https://ssltest.sharapov.biz/github.com
+curl https://myssl.sharapov.biz/github.com
 ```
 
 ---
@@ -156,13 +156,13 @@ Everything the page shows is available as data. Console clients (curl, wget,
 httpie, …) get JSON without asking.
 
 ```bash
-curl https://ssltest.sharapov.biz/example.com              # full report
-curl https://ssltest.sharapov.biz/api/example.com          # the same, explicitly
-curl https://ssltest.sharapov.biz/api/example.com:8443     # a different port
-curl "https://ssltest.sharapov.biz/api/example.com?output=yaml"
-curl "https://ssltest.sharapov.biz/api/example.com?refresh=1"     # bypass the cache
-curl "https://ssltest.sharapov.biz/api/example.com?download=1"    # as an attachment
-curl "https://ssltest.sharapov.biz/api/example.com?lang=ru"       # labels in Russian
+curl https://myssl.sharapov.biz/example.com              # full report
+curl https://myssl.sharapov.biz/api/example.com          # the same, explicitly
+curl https://myssl.sharapov.biz/api/example.com:8443     # a different port
+curl "https://myssl.sharapov.biz/api/example.com?output=yaml"
+curl "https://myssl.sharapov.biz/api/example.com?refresh=1"     # bypass the cache
+curl "https://myssl.sharapov.biz/api/example.com?download=1"    # as an attachment
+curl "https://myssl.sharapov.biz/api/example.com?lang=ru"       # labels in Russian
 ```
 
 ### Readable output
@@ -173,7 +173,7 @@ terminal. So every code is accompanied by a label, in any of the twelve
 interface languages. The codes never move or change, so scripts keep working:
 
 ```bash
-curl -s "https://ssltest.sharapov.biz/api/badssl.com?lang=de" |
+curl -s "https://myssl.sharapov.biz/api/badssl.com?lang=de" |
   jq -r '.vulnerabilities[] | select(.status != "safe") |
          "\(.severityLabel)\t\(.statusLabel)\t\(.name) — \(.description)"'
 ```
@@ -212,7 +212,7 @@ Query parameters: `output=json|yaml|html`, `port=`, `refresh=1`, `download=1`,
 A scan takes seconds, so the page follows it over SSE rather than waiting:
 
 ```bash
-curl -N https://ssltest.sharapov.biz/api/stream/example.com
+curl -N https://myssl.sharapov.biz/api/stream/example.com
 ```
 
 ```
