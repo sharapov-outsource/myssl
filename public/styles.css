@@ -116,6 +116,7 @@
   --brand-strong: #25257a;
   --brand-tint:   #ebebf8;
   --brand-ink:    #1a1a55;
+  --on-brand:     #fff;
 
   /* Verdict colours. Warm-leaning so they sit on paper without shouting. */
   --ok:        #16a34a;
@@ -175,6 +176,8 @@
     --brand-strong: #bcbcff;
     --brand-tint:   #241f45;
     --brand-ink:    #cfcfff;
+    /* The accent lifts after dark, so the label on it turns to ink. */
+    --on-brand:     #14110c;
 
     --ok:        #4ade80;
     --ok-tint:   #13321f;
@@ -260,9 +263,10 @@ button {
 button:hover { border-color: var(--ink); background: var(--bg-alt) }
 button:active { transform: translateY(1px) }
 button.primary {
-  background: var(--ink); color: var(--bg); border-color: var(--ink);
+  background: var(--brand); color: var(--on-brand); border-color: transparent;
+  font-weight: 600; box-shadow: 0 2px 8px rgba(58, 58, 166, .24);
 }
-button.primary:hover { background: var(--brand); border-color: var(--brand); color: #fff }
+button.primary:hover { background: var(--brand-strong); color: var(--on-brand) }
 button:disabled { opacity: .45; cursor: default; transform: none }
 button .mark { font-family: var(--font-mono); font-size: 13px; opacity: .7 }
 
