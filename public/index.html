@@ -1,24 +1,58 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="%LANG%" dir="%DIR%">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark light">
-  <meta name="description" content="Deep analysis of a server's TLS configuration: protocols, cipher suites, certificate chain, known weaknesses and a letter grade" id="meta-description">
-  <meta name="robots" content="index, follow">
-  <title>SSL Test — deep analysis of a server's TLS configuration</title>
-  <link rel="canonical" href="/" id="link-canonical">
+  <!-- Title and description come from the same dictionary the page uses, in the
+       language the request asked for, so a crawler that runs no JavaScript sees
+       what a visitor sees. -->
+  <title>%TITLE%</title>
+  <meta name="description" content="%DESCRIPTION%" id="meta-description">
+  <!-- Only the home page is worth indexing; a report page is a scan result. -->
+  <meta name="robots" content="%ROBOTS%" id="meta-robots">
+  <link rel="canonical" href="%URL%" id="link-canonical">
+
+  <meta name="theme-color" content="#0a0e16" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)">
+  <meta name="application-name" content="SSL Test">
+  <meta name="apple-mobile-web-app-title" content="SSL Test">
+  <meta name="format-detection" content="telephone=no">
+
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="SSL Test">
-  <meta property="og:url" content="/" id="og-url">
-  <meta property="og:locale" content="en_GB" id="og-locale">
-  <meta property="og:title" content="SSL Test — deep analysis of a server's TLS configuration" id="og-title">
-  <meta property="og:description" content="Protocols, cipher suites, certificate chain, known weaknesses and a letter grade" id="og-description">
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="SSL Test" id="twitter-title">
-  <meta name="twitter:description" content="Protocols, cipher suites, certificate chain, known weaknesses and a letter grade" id="twitter-description">
+  <meta property="og:url" content="%URL%" id="og-url">
+  <meta property="og:locale" content="%LOCALE%" id="og-locale">
+  <meta property="og:title" content="%TITLE%" id="og-title">
+  <meta property="og:description" content="%DESCRIPTION%" id="og-description">
+  <meta property="og:image" content="%ORIGIN%/static/og-image.png" id="og-image">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="SSL Test">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="%TITLE%" id="twitter-title">
+  <meta name="twitter:description" content="%DESCRIPTION%" id="twitter-description">
+  <meta name="twitter:image" content="%ORIGIN%/static/og-image.png" id="twitter-image">
+
   <link rel="stylesheet" href="/static/styles.css">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%92%3C/text%3E%3C/svg%3E">
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <link rel="manifest" href="/static/site.webmanifest">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "SSL Test",
+    "url": "%ORIGIN%/",
+    "applicationCategory": "SecurityApplication",
+    "operatingSystem": "Any",
+    "description": "%DESCRIPTION%",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "inLanguage": ["en", "ru", "es", "zh", "hi", "ar", "pt", "fr", "de", "ja", "tr", "uk"]
+  }
+  </script>
 </head>
 <body>
 <div class="wrap">

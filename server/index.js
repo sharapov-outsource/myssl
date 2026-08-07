@@ -22,7 +22,9 @@ import rateLimit from '@fastify/rate-limit';
 import YAML from 'yaml';
 
 import { scanCached, cacheStats, parseTarget, allowedPorts, STAGES } from './scan.js';
-import { pickLang, localizeReport, t, SUPPORTED_LANGS, LANG_NAMES } from './i18n.js';
+import {
+  pickLang, localizeReport, t, SUPPORTED_LANGS, LANG_NAMES, LANG_LOCALES, RTL_LANGS,
+} from './i18n.js';
 import { trustStats } from './trust.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -166,12 +168,58 @@ await app.register(fastifyStatic, {
 });
 
 const INDEX_HTML = readFileSync(path.join(PUBLIC_DIR, 'index.html'), 'utf8');
+const FAVICON = readFileSync(path.join(PUBLIC_DIR, 'favicon.ico'));
 
-function sendHtml(reply) {
+/** Values from the dictionary end up inside attributes, so they are escaped. */
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/**
+ * Where this instance answers from, for the absolute URLs crawlers and social
+ * previews need. It comes from the request, so the same image works on any
+ * domain the service is put behind — but the Host header is whatever the client
+ * typed, so it is checked before being written into a page.
+ */
+function originOf(req) {
+  if (process.env.PUBLIC_ORIGIN) return process.env.PUBLIC_ORIGIN.replace(/\/+$/, '');
+  const host = String(req.headers.host || '');
+  if (!host || host.length > 253 || !/^[a-z0-9.\-:[\]]+$/i.test(host)) return '';
+  return `${req.protocol}://${host}`;
+}
+
+/**
+ * The page, with the placeholders in its head filled in.
+ *
+ * A report page is a scan result, not a document worth indexing — `robots.txt`
+ * already keeps crawlers off it, and `noindex` covers the case where somebody
+ * links to one directly.
+ */
+function sendHtml(reply, req, { target } = {}) {
+  const origin = originOf(req);
+  const pathname = target
+    ? `/${encodeURIComponent(target.port === 443 ? target.host : `${target.host}:${target.port}`)}`
+    : '/';
+
+  const lang = pickLang(req);
+  const title = target ? `${target.host} — ${t(lang, 'title_short')}` : t(lang, 'title');
+
+  const html = INDEX_HTML
+    .replaceAll('%ORIGIN%', origin)
+    .replaceAll('%URL%', origin + pathname)
+    .replaceAll('%ROBOTS%', target ? 'noindex, follow' : 'index, follow')
+    .replaceAll('%LANG%', lang)
+    .replaceAll('%DIR%', RTL_LANGS.includes(lang) ? 'rtl' : 'ltr')
+    .replaceAll('%LOCALE%', (LANG_LOCALES[lang] || lang).replace('-', '_'))
+    .replaceAll('%TITLE%', escapeHtml(title))
+    .replaceAll('%DESCRIPTION%', escapeHtml(t(lang, 'subtitle')));
+
   return reply
     .type('text/html; charset=utf-8')
     .header('cache-control', 'public, max-age=300')
-    .send(INDEX_HTML);
+    .header('vary', 'accept, user-agent')
+    .send(html);
 }
 
 /* ------------------------------------------------------------------ *
@@ -274,11 +322,28 @@ app.get('/robots.txt', { config: { rateLimit: false } }, async (req, reply) =>
   reply.type('text/plain; charset=utf-8').send(
     // Crawlers are welcome on the home page only: walking arbitrary host names
     // would turn every crawl into a burst of outbound scans.
-    'User-agent: *\nAllow: /$\nDisallow: /api\nDisallow: /\n'
+    'User-agent: *\nAllow: /$\nDisallow: /api\nDisallow: /\n\n' +
+    `Sitemap: ${originOf(req)}/sitemap.xml\n`
   )
 );
 
-app.get('/favicon.ico', { config: { rateLimit: false } }, async (req, reply) => reply.code(204).send());
+app.get('/sitemap.xml', { config: { rateLimit: false } }, async (req, reply) =>
+  reply.type('application/xml; charset=utf-8').send(
+    // One page is all there is to index: everything else is a scan result.
+    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+    `  <url><loc>${originOf(req)}/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>\n` +
+    '</urlset>\n'
+  )
+);
+
+/* The icon browsers ask for by default, before they have seen the page. */
+app.get('/favicon.ico', { config: { rateLimit: false } }, async (req, reply) =>
+  reply
+    .type('image/x-icon')
+    .header('cache-control', 'public, max-age=86400')
+    .send(FAVICON)
+);
 
 /** What a console client sees at the root: how to use the thing. */
 const USAGE = {
@@ -303,7 +368,7 @@ app.get('/', { config: scanLimit }, async (req, reply) => {
     return sendData(reply, 'json',
       errorPayload({ code: 'bad-output', status: 400 }, pickLang(req)), { status: 400 });
   }
-  if (format === 'html') return sendHtml(reply);
+  if (format === 'html') return sendHtml(reply, req);
   return sendData(reply, format, USAGE);
 });
 
@@ -387,7 +452,7 @@ app.get('/:host', { config: scanLimit }, async (req, reply) => {
     if (target.error === 'invalid-host') {
       return reply.code(404).type('text/html; charset=utf-8').send(NOT_FOUND_HTML);
     }
-    return sendHtml(reply);
+    return sendHtml(reply, req, { target: target.error ? undefined : target });
   }
   return runScan(req, reply, req.params.host, format);
 });

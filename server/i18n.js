@@ -34,6 +34,8 @@ const dictionaries = load();
 
 export const I18N = dictionaries.I18N || { en: {} };
 export const LANG_NAMES = dictionaries.LANG_NAMES || {};
+export const LANG_LOCALES = dictionaries.LANG_LOCALES || {};
+export const RTL_LANGS = dictionaries.RTL_LANGS || [];
 export const SUPPORTED_LANGS = Object.keys(I18N);
 export const DEFAULT_LANG = I18N.en ? 'en' : SUPPORTED_LANGS[0];
 

@@ -246,13 +246,20 @@ function startScan(host, { refresh = false } = {}) {
 
 function render() {
   renderAlerts();
+  // Without a report there is nothing to fill the cards with, so the grid stays
+  // hidden — including after a language switch on the start page, which is what
+  // used to leave a screen of empty cards above the hint.
   if (!REPORT) {
-    byId('report').hidden = Boolean(LAST_ERROR);
-    if (LAST_ERROR) byId('grade-badge').className = 'grade-badge g-f';
-    if (LAST_ERROR) byId('grade-badge').textContent = '!';
+    byId('report').hidden = true;
+    byId('empty').hidden = Boolean(TARGET);
+    if (LAST_ERROR) {
+      byId('grade-badge').className = 'grade-badge g-f';
+      byId('grade-badge').textContent = '!';
+    }
     return;
   }
   byId('report').hidden = false;
+  byId('empty').hidden = true;
   renderHero();
   renderGrade();
   renderCertificate();
@@ -673,6 +680,10 @@ function renderRaw() {
  * Language and metadata
  * ================================================================== */
 
+/**
+ * The head is filled in by the server for the first paint; this keeps it right
+ * afterwards, when the language changes or the page navigates without reloading.
+ */
 function updateSeoMeta() {
   const title = TARGET ? `${TARGET} — ${t('title_short')}` : t('title');
   const description = t('subtitle');
@@ -685,9 +696,13 @@ function updateSeoMeta() {
   byId('og-description')?.setAttribute('content', description);
   byId('og-locale')?.setAttribute('content', ogLocale);
   byId('og-url')?.setAttribute('content', url);
+  byId('og-image')?.setAttribute('content', location.origin + '/static/og-image.png');
   byId('twitter-title')?.setAttribute('content', title);
   byId('twitter-description')?.setAttribute('content', description);
+  byId('twitter-image')?.setAttribute('content', location.origin + '/static/og-image.png');
   byId('link-canonical')?.setAttribute('href', url);
+  // A report is a scan result, not something to leave in an index.
+  byId('meta-robots')?.setAttribute('content', TARGET ? 'noindex, follow' : 'index, follow');
 }
 
 const EXAMPLES = ['github.com', 'badssl.com', 'expired.badssl.com', 'self-signed.badssl.com'];

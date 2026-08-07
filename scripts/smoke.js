@@ -55,8 +55,17 @@ async function run() {
   const health = await (await fetch(`${base}/healthz`)).json();
   check('healthz: status', health.status === 'ok');
   check('healthz: cache stats', typeof health.cache?.entries === 'number');
-  check('robots.txt', (await fetch(`${base}/robots.txt`)).ok);
-  check('favicon', (await fetch(`${base}/favicon.ico`)).status === 204);
+  const robots = await fetch(`${base}/robots.txt`);
+  check('robots.txt', robots.ok);
+  check('robots.txt: points at the sitemap', (await robots.text()).includes('Sitemap:'));
+
+  const sitemap = await fetch(`${base}/sitemap.xml`);
+  check('sitemap.xml', sitemap.ok);
+  check('sitemap.xml: lists the home page', (await sitemap.text()).includes('<loc>'));
+
+  const favicon = await fetch(`${base}/favicon.ico`);
+  check('favicon.ico', favicon.ok);
+  check('favicon.ico: is an icon', (favicon.headers.get('content-type') || '').includes('icon'));
 
   // The page for browsers.
   const page = await fetch(`${base}/example.com`, {
@@ -67,6 +76,27 @@ async function run() {
   check('html: content-type', (page.headers.get('content-type') || '').includes('text/html'));
   check('html: links app.js', html.includes('/static/app.js'));
   check('html: links i18n.js', html.includes('/static/i18n.js'));
+
+  // The head is filled in per request: no placeholder may survive.
+  check('html: no placeholders left', !/%(ORIGIN|URL|ROBOTS|LANG|DIR|TITLE|DESCRIPTION|LOCALE)%/.test(html),
+    (html.match(/%[A-Z]+%/) || [])[0]);
+  check('html: absolute canonical', html.includes(`<link rel="canonical" href="${base}/example.com"`));
+  check('html: report pages are not indexed', html.includes('content="noindex, follow"'));
+  check('html: social image', html.includes(`content="${base}/static/og-image.png"`));
+  check('html: icons', html.includes('/static/icon.svg') && html.includes('/static/apple-touch-icon.png'));
+  check('html: manifest', html.includes('/static/site.webmanifest'));
+
+  // The head is translated by the same dictionary the page uses.
+  const russian = await (await fetch(`${base}/`, {
+    headers: { accept: 'text/html', 'user-agent': 'Mozilla/5.0', 'accept-language': 'ru-RU,ru;q=0.9' },
+  })).text();
+  check('html: honours accept-language', russian.includes('<html lang="ru"'));
+  check('html: translated title', /<title>SSL Test — подробный/.test(russian), russian.match(/<title>[^<]*/)?.[0]);
+  const arabic = await (await fetch(`${base}/`, {
+    headers: { accept: 'text/html', 'user-agent': 'Mozilla/5.0', 'accept-language': 'ar' },
+  })).text();
+  check('html: right-to-left for arabic', arabic.includes('<html lang="ar" dir="rtl"'));
+  check('html: home page is indexed', arabic.includes('content="index, follow"'));
 
   // Console clients get data without asking.
   const usage = await fetch(`${base}/`, { headers: { 'user-agent': 'curl/8.7.1' } });
@@ -118,7 +148,8 @@ async function run() {
   check('header referrer-policy', Boolean(page.headers.get('referrer-policy')));
 
   // Static assets and directory traversal protection.
-  for (const file of ['styles.css', 'app.js', 'i18n.js', 'sharapov.svg']) {
+  for (const file of ['styles.css', 'app.js', 'i18n.js', 'sharapov.svg',
+    'icon.svg', 'apple-touch-icon.png', 'og-image.png', 'site.webmanifest']) {
     const res = await fetch(`${base}/static/${file}`);
     check(`static ${file}`, res.ok, `status ${res.status}`);
   }

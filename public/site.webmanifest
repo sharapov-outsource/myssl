@@ -1,0 +1,15 @@
+{
+  "name": "SSL Test",
+  "short_name": "SSL Test",
+  "description": "Check how any server speaks TLS: protocols, cipher suites, certificate chain and known weaknesses.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0e16",
+  "theme_color": "#0a0e16",
+  "icons": [
+    { "src": "/static/icon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any" },
+    { "src": "/static/icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/static/icon-512.png", "type": "image/png", "sizes": "512x512" }
+  ]
+}

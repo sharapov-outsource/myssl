@@ -24,6 +24,9 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
+/* An author `display` beats the browser's own [hidden] rule, so the grid below
+   would stay on screen with the attribute set. This puts it back. */
+[hidden]{display:none!important}
 body{
   background:
     radial-gradient(1100px 600px at 12% -12%, rgba(56,189,248,.13), transparent 60%),
@@ -285,7 +288,7 @@ pre.raw{
 }
 .empty{
   border:1px dashed var(--line2);border-radius:16px;padding:26px 20px;text-align:center;
-  color:var(--muted);font-size:14px;
+  color:var(--muted);font-size:14px;margin-top:16px;
 }
 .examples{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
 .examples button{font-family:var(--mono);font-size:12.5px}
