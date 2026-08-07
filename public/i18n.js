@@ -183,6 +183,7 @@ window.I18N.en = {
   a_self_signed: '<b>The certificate is self-signed.</b> No browser trusts it without being told to.',
   a_incomplete: '<b>The chain is incomplete.</b> An intermediate certificate is missing, which breaks clients that cannot fetch it themselves.',
   a_all_good: 'No known weaknesses found in this configuration.',
+  a_scan_incomplete: '<b>The scan is incomplete.</b> The server answered the first handshake and then stopped responding — usually a rate limiter reacting to the probes. Protocols, cipher suites and the grade are missing; the certificate below was read before that happened.',
 
   /* ---- toasts ---- */
   toast_copied: 'Copied',
@@ -305,6 +306,7 @@ window.I18N.en = {
   cap_must_staple_without_stapling: 'must-staple without stapling',
   cap_certificate_name_mismatch: 'certificate name does not match',
   cap_certificate_not_trusted: 'certificate not trusted',
+  cap_scan_incomplete: 'scan incomplete',
 
   /* ---- rating warnings ---- */
   warn_no_tls13: 'TLS 1.3 not enabled',
@@ -538,6 +540,7 @@ window.I18N.ru = {
   a_self_signed: '<b>Сертификат самоподписанный.</b> Ни один браузер не доверяет ему без ручной настройки.',
   a_incomplete: '<b>Цепочка неполная.</b> Не хватает промежуточного сертификата — клиенты, которые не умеют его догружать, соединиться не смогут.',
   a_all_good: 'Проверка не нашла в этой конфигурации ни одного известного слабого места.',
+  a_scan_incomplete: '<b>Проверка неполная.</b> Сервер ответил на первое рукопожатие, а дальше замолчал — обычно так реагирует защита от частых запросов. Протоколов, шифронаборов и оценки нет; сертификат ниже успел прочитаться до этого.',
 
   /* ---- всплывающие сообщения ---- */
   toast_copied: 'Скопировано',
@@ -660,6 +663,7 @@ window.I18N.ru = {
   cap_must_staple_without_stapling: 'must-staple без stapling',
   cap_certificate_name_mismatch: 'имя в сертификате не совпадает',
   cap_certificate_not_trusted: 'сертификат не доверенный',
+  cap_scan_incomplete: 'проверка неполная',
 
   /* ---- предупреждения оценки ---- */
   warn_no_tls13: 'TLS 1.3 не включён',
@@ -893,6 +897,7 @@ window.I18N.es = {
   a_self_signed: '<b>El certificado es autofirmado.</b> Ningún navegador confía en él sin una excepción manual.',
   a_incomplete: '<b>La cadena está incompleta.</b> Falta un certificado intermedio, y los clientes que no saben descargarlo fallan.',
   a_all_good: 'No se ha encontrado ninguna debilidad conocida en esta configuración.',
+  a_scan_incomplete: '<b>El análisis está incompleto.</b> El servidor respondió al primer handshake y luego dejó de contestar, normalmente por un limitador de peticiones. Faltan los protocolos, los conjuntos de cifrado y la nota; el certificado de abajo se leyó antes de eso.',
 
   /* ---- mensajes breves ---- */
   toast_copied: 'Copiado',
@@ -1015,6 +1020,7 @@ window.I18N.es = {
   cap_must_staple_without_stapling: 'must-staple sin stapling',
   cap_certificate_name_mismatch: 'el nombre del certificado no coincide',
   cap_certificate_not_trusted: 'certificado no fiable',
+  cap_scan_incomplete: 'análisis incompleto',
 
   /* ---- advertencias de la nota ---- */
   warn_no_tls13: 'TLS 1.3 no activado',
@@ -1248,6 +1254,7 @@ window.I18N.zh = {
   a_self_signed: '<b>证书是自签名的。</b>没有浏览器会在未手动放行的情况下信任它。',
   a_incomplete: '<b>证书链不完整。</b>缺少中间证书，不会自行补全的客户端将无法连接。',
   a_all_good: '在这套配置中没有发现已知弱点。',
+  a_scan_incomplete: '<b>检测不完整。</b>服务器完成了第一次握手后就不再回应，通常是限流机制在起作用。协议、密码套件和评分都缺失；下面的证书是在此之前读到的。',
 
   /* ---- 轻提示 ---- */
   toast_copied: '已复制',
@@ -1370,6 +1377,7 @@ window.I18N.zh = {
   cap_must_staple_without_stapling: '声明 must-staple 却未装订',
   cap_certificate_name_mismatch: '证书名称不匹配',
   cap_certificate_not_trusted: '证书不受信任',
+  cap_scan_incomplete: '检测不完整',
 
   /* ---- 评分警告 ---- */
   warn_no_tls13: '未开启 TLS 1.3',
@@ -1603,6 +1611,7 @@ window.I18N.hi = {
   a_self_signed: '<b>प्रमाणपत्र स्व-हस्ताक्षरित है।</b> बिना मैनुअल अपवाद के कोई ब्राउज़र इस पर भरोसा नहीं करता।',
   a_incomplete: '<b>शृंखला अधूरी है।</b> एक मध्यवर्ती प्रमाणपत्र गायब है; जो क्लाइंट उसे खुद नहीं ला सकते, वे जुड़ नहीं पाएँगे।',
   a_all_good: 'इस विन्यास में कोई ज्ञात कमज़ोरी नहीं मिली।',
+  a_scan_incomplete: '<b>जाँच अधूरी रह गई।</b> सर्वर ने पहला हैंडशेक पूरा किया और फिर जवाब देना बंद कर दिया — आम तौर पर यह दर-सीमक की प्रतिक्रिया होती है। प्रोटोकॉल, सिफर सूट और ग्रेड नहीं हैं; नीचे का प्रमाणपत्र उससे पहले पढ़ा जा चुका था।',
 
   /* ---- संक्षिप्त संदेश ---- */
   toast_copied: 'कॉपी हो गया',
@@ -1725,6 +1734,7 @@ window.I18N.hi = {
   cap_must_staple_without_stapling: 'must-staple पर स्टेपलिंग नहीं',
   cap_certificate_name_mismatch: 'प्रमाणपत्र का नाम मेल नहीं खाता',
   cap_certificate_not_trusted: 'प्रमाणपत्र भरोसेमंद नहीं',
+  cap_scan_incomplete: 'जाँच अधूरी',
 
   /* ---- ग्रेड की चेतावनियाँ ---- */
   warn_no_tls13: 'TLS 1.3 चालू नहीं',
@@ -1958,6 +1968,7 @@ window.I18N.ar = {
   a_self_signed: '<b>الشهادة موقّعة ذاتياً.</b> لا يثق بها أي متصفح دون استثناء يدوي.',
   a_incomplete: '<b>السلسلة ناقصة.</b> تنقص شهادة وسيطة، والعملاء الذين لا يجلبونها بأنفسهم لن يتصلوا.',
   a_all_good: 'لم يُعثر على أي نقطة ضعف معروفة في هذه الإعدادات.',
+  a_scan_incomplete: '<b>الفحص غير مكتمل.</b> ردّ الخادم على المصافحة الأولى ثم توقّف عن الرد، وعادةً ما يكون ذلك مُحدِّد معدّل يتفاعل مع الفحص. البروتوكولات ومجموعات التشفير والتقدير غائبة؛ أما الشهادة أدناه فقد قُرئت قبل ذلك.',
 
   /* ---- رسائل قصيرة ---- */
   toast_copied: 'تم النسخ',
@@ -2080,6 +2091,7 @@ window.I18N.ar = {
   cap_must_staple_without_stapling: 'must-staple بلا تدبيس',
   cap_certificate_name_mismatch: 'اسم الشهادة غير مطابق',
   cap_certificate_not_trusted: 'الشهادة غير موثوقة',
+  cap_scan_incomplete: 'الفحص غير مكتمل',
 
   /* ---- تحذيرات التقدير ---- */
   warn_no_tls13: 'TLS 1.3 غير مفعّل',
@@ -2313,6 +2325,7 @@ window.I18N.pt = {
   a_self_signed: '<b>O certificado é autoassinado.</b> Nenhum navegador confia nele sem uma exceção manual.',
   a_incomplete: '<b>A cadeia está incompleta.</b> Falta um certificado intermediário, e clientes que não sabem baixá-lo falham.',
   a_all_good: 'Nenhuma fraqueza conhecida foi encontrada nesta configuração.',
+  a_scan_incomplete: '<b>A análise está incompleta.</b> O servidor respondeu ao primeiro handshake e depois parou de responder — normalmente um limitador de requisições reagindo às sondagens. Faltam os protocolos, os conjuntos de cifras e a nota; o certificado abaixo foi lido antes disso.',
 
   /* ---- mensagens curtas ---- */
   toast_copied: 'Copiado',
@@ -2435,6 +2448,7 @@ window.I18N.pt = {
   cap_must_staple_without_stapling: 'must-staple sem stapling',
   cap_certificate_name_mismatch: 'o nome do certificado não confere',
   cap_certificate_not_trusted: 'certificado não confiável',
+  cap_scan_incomplete: 'análise incompleta',
 
   /* ---- avisos da nota ---- */
   warn_no_tls13: 'TLS 1.3 não ativado',
@@ -2668,6 +2682,7 @@ window.I18N.fr = {
   a_self_signed: '<b>Le certificat est auto-signé.</b> Aucun navigateur ne lui fait confiance sans exception manuelle.',
   a_incomplete: '<b>La chaîne est incomplète.</b> Un certificat intermédiaire manque, et les clients incapables de le récupérer échouent.',
   a_all_good: 'Aucune faiblesse connue n\'a été trouvée dans cette configuration.',
+  a_scan_incomplete: '<b>L\'analyse est incomplète.</b> Le serveur a répondu à la première poignée de main puis s\'est tu — en général un limiteur de débit qui réagit aux sondes. Les protocoles, les suites de chiffrement et la note manquent ; le certificat ci-dessous a été lu avant cela.',
 
   /* ---- messages courts ---- */
   toast_copied: 'Copié',
@@ -2790,6 +2805,7 @@ window.I18N.fr = {
   cap_must_staple_without_stapling: 'must-staple sans agrafage',
   cap_certificate_name_mismatch: 'le nom du certificat ne correspond pas',
   cap_certificate_not_trusted: 'certificat non fiable',
+  cap_scan_incomplete: 'analyse incomplète',
 
   /* ---- avertissements ---- */
   warn_no_tls13: 'TLS 1.3 non activé',
@@ -3023,6 +3039,7 @@ window.I18N.de = {
   a_self_signed: '<b>Das Zertifikat ist selbstsigniert.</b> Kein Browser vertraut ihm ohne ausdrückliche Ausnahme.',
   a_incomplete: '<b>Die Kette ist unvollständig.</b> Ein Zwischenzertifikat fehlt — Clients, die es nicht selbst nachladen, scheitern.',
   a_all_good: 'In dieser Konfiguration wurde keine bekannte Schwachstelle gefunden.',
+  a_scan_incomplete: '<b>Die Prüfung ist unvollständig.</b> Der Server hat den ersten Handshake beantwortet und danach geschwiegen — meist reagiert so eine Ratenbegrenzung auf die Anfragen. Protokolle, Cipher Suites und Note fehlen; das Zertifikat unten wurde davor gelesen.',
 
   /* ---- Kurzmeldungen ---- */
   toast_copied: 'Kopiert',
@@ -3145,6 +3162,7 @@ window.I18N.de = {
   cap_must_staple_without_stapling: 'Must-Staple ohne Stapling',
   cap_certificate_name_mismatch: 'Name im Zertifikat passt nicht',
   cap_certificate_not_trusted: 'Zertifikat nicht vertrauenswürdig',
+  cap_scan_incomplete: 'Prüfung unvollständig',
 
   /* ---- Warnungen zur Note ---- */
   warn_no_tls13: 'TLS 1.3 nicht aktiv',
@@ -3378,6 +3396,7 @@ window.I18N.ja = {
   a_self_signed: '<b>証明書は自己署名です。</b>手動で例外を設けない限り、どのブラウザーも信頼しません。',
   a_incomplete: '<b>チェーンが不完全です。</b>中間証明書が欠けており、自分で取得できないクライアントは接続できません。',
   a_all_good: 'この設定に既知の弱点は見つかりませんでした。',
+  a_scan_incomplete: '<b>検査は不完全です。</b>サーバーは最初のハンドシェイクには応じ、その後は黙り込みました。多くの場合はレート制限が反応しています。プロトコル、暗号スイート、評価は欠けています。下の証明書はそれ以前に読み取れたものです。',
 
   /* ---- 通知 ---- */
   toast_copied: 'コピーしました',
@@ -3500,6 +3519,7 @@ window.I18N.ja = {
   cap_must_staple_without_stapling: 'must-staple なのにステープリングなし',
   cap_certificate_name_mismatch: '証明書の名前が一致しない',
   cap_certificate_not_trusted: '証明書が信頼できない',
+  cap_scan_incomplete: '検査は不完全',
 
   /* ---- 評価の警告 ---- */
   warn_no_tls13: 'TLS 1.3 が有効でない',
@@ -3733,6 +3753,7 @@ window.I18N.tr = {
   a_self_signed: '<b>Sertifika kendinden imzalı.</b> Hiçbir tarayıcı elle istisna tanımlanmadan ona güvenmez.',
   a_incomplete: '<b>Zincir eksik.</b> Bir ara sertifika yok; onu kendi indiremeyen istemciler bağlanamaz.',
   a_all_good: 'Bu yapılandırmada bilinen hiçbir zayıflık bulunamadı.',
+  a_scan_incomplete: '<b>Tarama eksik kaldı.</b> Sunucu ilk el sıkışmaya yanıt verdi, sonra sustu — çoğunlukla bir hız sınırlayıcı devreye girer. Protokoller, şifre takımları ve not yok; aşağıdaki sertifika bundan önce okunmuştu.',
 
   /* ---- kısa bildirimler ---- */
   toast_copied: 'Kopyalandı',
@@ -3855,6 +3876,7 @@ window.I18N.tr = {
   cap_must_staple_without_stapling: 'stapling olmadan must-staple',
   cap_certificate_name_mismatch: 'sertifikadaki ad uyuşmuyor',
   cap_certificate_not_trusted: 'sertifika güvenilir değil',
+  cap_scan_incomplete: 'tarama eksik',
 
   /* ---- not uyarıları ---- */
   warn_no_tls13: 'TLS 1.3 açık değil',
@@ -4088,6 +4110,7 @@ window.I18N.uk = {
   a_self_signed: '<b>Сертифікат самопідписаний.</b> Жоден браузер не довіряє йому без ручного винятку.',
   a_incomplete: '<b>Ланцюжок неповний.</b> Бракує проміжного сертифіката — клієнти, які не вміють його довантажувати, зʼєднатися не зможуть.',
   a_all_good: 'Перевірка не знайшла в цій конфігурації жодного відомого слабкого місця.',
+  a_scan_incomplete: '<b>Перевірка неповна.</b> Сервер відповів на перше рукостискання, а далі замовк — зазвичай так реагує захист від частих запитів. Протоколів, шифронаборів та оцінки немає; сертифікат нижче встиг прочитатися до цього.',
 
   /* ---- спливні повідомлення ---- */
   toast_copied: 'Скопійовано',
@@ -4210,6 +4233,7 @@ window.I18N.uk = {
   cap_must_staple_without_stapling: 'must-staple без stapling',
   cap_certificate_name_mismatch: 'імʼя в сертифікаті не збігається',
   cap_certificate_not_trusted: 'сертифікат не довірений',
+  cap_scan_incomplete: 'перевірка неповна',
 
   /* ---- попередження оцінки ---- */
   warn_no_tls13: 'TLS 1.3 не ввімкнено',

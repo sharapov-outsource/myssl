@@ -195,6 +195,22 @@ function goodConfig(overrides = {}) {
   return config;
 }
 
+test('a scan whose probes were all refused gets no grade at all', () => {
+  const config = goodConfig({
+    incomplete: true,
+    protocols: [
+      { name: 'TLS 1.2', supported: false },
+      { name: 'TLS 1.3', supported: false },
+    ],
+    allCiphers: [],
+  });
+  const result = grade({ ...config, vulnerabilities: assessVulnerabilities(config) });
+  // The alternative is what used to happen: 27 points and an E, invented out
+  // of connections that never got answered.
+  assert.equal(result.grade, '?');
+  assert.equal(result.reason, 'scan-incomplete');
+});
+
 test('a clean modern configuration reaches A+', () => {
   const result = grade(goodConfig());
   assert.equal(result.grade, 'A+');

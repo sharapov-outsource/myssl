@@ -179,6 +179,12 @@ export function grade(data) {
     return finish('T', 'certificate-not-trusted');
   }
 
+  /* --- nothing to grade --- */
+  // A certificate problem is still worth reporting from a partial scan: the
+  // certificate was read before the target went quiet. Everything the score is
+  // built from was not, so there is no score.
+  if (data.incomplete) return finish('?', 'scan-incomplete');
+
   /* --- straight to F --- */
   if (data.ssl2?.supported) cap('F', 'ssl2-supported');
   if (isVulnerable('insecure-renegotiation')) cap('F', 'insecure-renegotiation');

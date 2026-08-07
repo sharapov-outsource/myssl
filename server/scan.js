@@ -141,6 +141,12 @@ const STAGES = [
   'certificate', 'features', 'http', 'clients', 'grade',
 ];
 
+/** Worth knowing about: it usually means a target is throttling the scanner. */
+function warnIncomplete(host, port) {
+  console.warn(`scan incomplete: ${host}:${port} answered the first handshake ` +
+    'but no protocol probe, so the report carries no grade');
+}
+
 export { STAGES };
 
 /**
@@ -212,6 +218,15 @@ async function runScan(rawHost, { port: defaultPort = 443, onProgress = () => {}
   const protocols = await detectProtocols(endpoint);
   const supported = protocols.filter(p => p.supported).map(p => p.name);
   progress('protocols', { done: true, supported });
+
+  /* The first handshake already succeeded, so a server that then answers no
+     version at all is not a server without TLS — it is one that stopped
+     answering, usually because the burst of probes tripped a rate limiter.
+     Everything downstream would be measuring the silence, not the server. */
+  const incomplete = supported.length === 0;
+  if (incomplete) {
+    warnIncomplete(host, port);
+  }
 
   /* Everything below only needs the list of supported versions, so the slow
      cipher walk runs alongside the certificate, HTTP and feature checks. */
@@ -306,6 +321,7 @@ async function runScan(rawHost, { port: defaultPort = 443, onProgress = () => {}
     host,
     port,
     ip,
+    incomplete,
     protocols,
     ssl2: features.ssl2,
     allCiphers: [...allCiphers],
@@ -369,6 +385,7 @@ async function runScan(rawHost, { port: defaultPort = 443, onProgress = () => {}
       standardName: node.cipherStandard,
       alpn: node.alpnProtocol,
     },
+    incomplete,
     meta: {
       elapsedMs: Date.now() - started,
       connections: byVersion.reduce((sum, v) => sum + v.connections, 0),

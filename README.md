@@ -245,6 +245,7 @@ The image runs as a non-root user and needs no writable filesystem.
 | `ALLOWED_PORTS` | 443, 8443, 993, 995, 465, … | ports that may be scanned |
 | `SCAN_TIMEOUT_MS` | `60000` | hard ceiling for one scan |
 | `PROBE_TIMEOUT_MS` | `8000` | timeout for a single connection |
+| `PROBE_INTERVAL_MS` | `40` | spacing between outbound connections; `0` disables the pacing |
 | `CACHE_TTL_MS` | `600000` | how long a report is reused |
 | `CACHE_MAX` | `500` | reports kept in memory |
 | `EXTRA_CA_DIR` | `server/roots` | directory of extra trust anchors, in PEM |
@@ -266,6 +267,8 @@ scanner for whatever network it runs in.
 * per-client rate limits and a global ceiling on concurrent scans;
 * results are cached for ten minutes, and two requests for the same target that
   arrive together share one scan;
+* outbound connections are spaced out rather than fired in a burst, which is
+  what makes a rate limiter on the far side start dropping probes;
 * every probe has a timeout and every enumeration loop a ceiling on rounds;
 * `robots.txt` allows the home page only, and report pages carry `noindex`.
 
@@ -356,6 +359,8 @@ test/             unit tests and end-to-end scans of a local server
 * Client profiles approximate what those clients offer — enough to answer
   whether they can connect, not byte-exact replicas.
 * Certificate Transparency timestamps are counted, not verified against logs.
+* A target that stops answering mid-scan produces a report marked `incomplete`
+  with no grade, rather than a low one invented from unanswered probes.
 
 ## License
 
@@ -607,6 +612,7 @@ docker run --rm -p 3024:3024 myssl
 | `ALLOWED_PORTS` | 443, 8443, 993, 995, 465, … | порты, которые разрешено проверять |
 | `SCAN_TIMEOUT_MS` | `60000` | жёсткий потолок на один скан |
 | `PROBE_TIMEOUT_MS` | `8000` | таймаут одного соединения |
+| `PROBE_INTERVAL_MS` | `40` | пауза между исходящими соединениями; `0` отключает |
 | `CACHE_TTL_MS` | `600000` | сколько живёт результат в кэше |
 | `CACHE_MAX` | `500` | сколько отчётов держать в памяти |
 | `EXTRA_CA_DIR` | `server/roots` | каталог с дополнительными корнями в PEM |
@@ -628,6 +634,8 @@ docker run --rm -p 3024:3024 myssl
 * лимиты на клиента и общий потолок одновременных сканов;
 * результаты кэшируются на десять минут, два одновременных запроса по одной цели
   делят один скан;
+* исходящие соединения разносятся по времени, а не летят пачкой — именно пачка
+  заставляет защиту на той стороне ронять пробы;
 * у каждой пробы свой таймаут, у каждого цикла перебора — предел числа раундов;
 * `robots.txt` разрешает только главную, у страниц отчётов стоит `noindex`.
 
@@ -719,6 +727,8 @@ test/             модульные тесты и сквозные сканы �
 * Профили клиентов — приближения того, что предлагают эти клиенты: достаточно
   точные, чтобы ответить, подключатся ли они, но не побайтовые копии.
 * Метки Certificate Transparency считаются, но не сверяются с логами.
+* Если цель перестаёт отвечать посреди проверки, отчёт помечается `incomplete`
+  и остаётся без оценки, а не получает низкую, придуманную из неотвеченных проб.
 
 ### Лицензия
 

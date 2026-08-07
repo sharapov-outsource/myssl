@@ -13,16 +13,19 @@
 
 import tls from 'node:tls';
 
+import { pace } from './pace.js';
+
 const DEFAULT_ALPN = ['h2', 'http/1.1'];
 
 /**
  * One full handshake.
  * @returns {Promise<object>} always resolves; failures come back as `{ ok:false, error }`
  */
-export function tlsInspect({
+export async function tlsInspect({
   host, ip, port = 443, servername, timeout = 10000,
   alpn = DEFAULT_ALPN, session, minVersion, maxVersion, triggerTicket = false,
 }) {
+  await pace();
   return new Promise(resolve => {
     const started = Date.now();
     let settled = false;
@@ -141,7 +144,8 @@ export async function checkResumption(target) {
  * Renegotiation initiated by the client. A server that allows it can be made to
  * burn CPU on demand; TLS 1.3 removed the feature altogether.
  */
-export function checkRenegotiation({ host, ip, port = 443, servername, timeout = 8000 }) {
+export async function checkRenegotiation({ host, ip, port = 443, servername, timeout = 8000 }) {
+  await pace();
   return new Promise(resolve => {
     let settled = false;
     const done = value => {

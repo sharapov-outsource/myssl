@@ -19,6 +19,7 @@ import net from 'node:net';
 import crypto from 'node:crypto';
 
 import { describeSuite } from './suites.js';
+import { pace } from './pace.js';
 
 /* ------------------------------------------------------------------ *
  * Constants
@@ -379,10 +380,13 @@ const MAX_RESPONSE = 512 * 1024;
  *
  * Never throws: transport problems come back as `{ ok: false, error }`.
  */
-export function probe(opts) {
+export async function probe(opts) {
   const {
     host, ip, port = 443, timeout = 8000, collect = 'full',
   } = opts;
+
+  // Wait for this probe's turn before touching the network.
+  await pace();
 
   return new Promise(resolve => {
     const started = Date.now();
@@ -562,7 +566,8 @@ const SSL2_CIPHERS = [0x010080, 0x020080, 0x030080, 0x040080, 0x050080, 0x060040
  * it is what makes a server vulnerable to DROWN, which is why it is still worth
  * asking twenty-odd years after the protocol was withdrawn.
  */
-export function probeSsl2({ host, ip, port = 443, timeout = 6000 }) {
+export async function probeSsl2({ host, ip, port = 443, timeout = 6000 }) {
+  await pace();
   return new Promise(resolve => {
     const specs = Buffer.concat(SSL2_CIPHERS.map(c => Buffer.from([c >> 16 & 0xff, c >> 8 & 0xff, c & 0xff])));
     const challenge = crypto.randomBytes(16);

@@ -94,7 +94,7 @@ CODES.vuln = vulnIds;
 CODES.vd = vulnIds;
 
 CODES.cap = [...source('server/grade.js').matchAll(/cap\('[A-Z+]+',\s*'([a-z0-9-]+)'/g)].map(m => m[1])
-  .concat([...source('server/grade.js').matchAll(/finish\('[A-Z]',\s*'([a-z0-9-]+)'/g)].map(m => m[1]));
+  .concat([...source('server/grade.js').matchAll(/finish\('[^']+',\s*'([a-z0-9-]+)'/g)].map(m => m[1]));
 CODES.warn = [...source('server/grade.js').matchAll(/warnings\.push\('([a-z0-9-]+)'/g)].map(m => m[1]);
 CODES.issue = [...source('server/cert.js').matchAll(/issues\.push\('([a-z0-9-]+)'/g)].map(m => m[1]);
 

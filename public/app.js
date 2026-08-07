@@ -293,6 +293,10 @@ function renderAlerts() {
   }
   if (!REPORT) return;
 
+  if (REPORT.incomplete) {
+    add('warn', `<span aria-hidden="true">◐</span><div>${t('a_scan_incomplete')}</div>`);
+  }
+
   const cert = REPORT.certificate || {};
   const issues = new Set(cert.issues || []);
   if (issues.has('hostname-mismatch')) {
@@ -320,7 +324,8 @@ function renderAlerts() {
       finding.cve ? ` <code>${esc(finding.cve)}</code>` : ''}<br>${esc(tCode('vd', finding.id))}</div>`);
   }
 
-  if (!critical.length && !issues.size && REPORT.grade?.grade?.startsWith('A')) {
+  if (!critical.length && !issues.size && !REPORT.incomplete &&
+      REPORT.grade?.grade?.startsWith('A')) {
     add('ok', `<span aria-hidden="true">✓</span><div>${t('a_all_good')}</div>`);
   }
 }
@@ -329,7 +334,8 @@ function renderHero() {
   const grade = REPORT.grade?.grade || '?';
   const badge = byId('grade-badge');
   badge.textContent = grade;
-  badge.className = 'grade-badge g-' + grade[0].toLowerCase();
+  // "?" means the scan could not see enough to judge — no colour for that.
+  badge.className = grade === '?' ? 'grade-badge pending' : 'grade-badge g-' + grade[0].toLowerCase();
 
   byId('hero-host').textContent = `${REPORT.host}${REPORT.port === 443 ? '' : ':' + REPORT.port}`;
 
@@ -368,7 +374,7 @@ function renderGrade() {
   meter('bar-kex', 'score-kex', c.keyExchange.score);
   meter('bar-cipher', 'score-cipher', c.cipher.score);
 
-  set('score-total', `${g.score} / 100`);
+  set('score-total', g.grade === '?' ? null : `${g.score} / 100`);
   set('grade-best', c.protocol.best ? `${c.protocol.best} … ${c.protocol.worst}` : null);
   const weakest = c.keyExchange.weakest;
   set('grade-weakest', weakest
