@@ -1,0 +1,33 @@
+{
+  "name": "ssltest",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "homepage": "https://ssltest.sharapov.biz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sharapov-outsource/myssl.git"
+  },
+  "bugs": "https://github.com/sharapov-outsource/myssl/issues",
+  "description": "Deep analysis of the TLS configuration of any public server: protocols, cipher suites, certificate chain, known weaknesses and a letter grade",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "scan": "node scripts/scan-cli.js",
+    "check:i18n": "node scripts/check-i18n.js",
+    "check:syntax": "node --check public/app.js && node --check public/i18n.js && node --check server/index.js && node --check server/scan.js && node --check server/tls-probe.js && node --check server/suites.js && node --check server/cert.js && node --check server/http-probe.js && node --check server/dns-probe.js && node --check server/vulns.js && node --check server/grade.js && node --check server/asn1.js",
+    "test:unit": "node --test \"test/*.test.js\"",
+    "smoke": "node scripts/smoke.js",
+    "test": "npm run check:syntax && npm run check:i18n && npm run test:unit && npm run smoke"
+  },
+  "dependencies": {
+    "@fastify/rate-limit": "^10.2.2",
+    "@fastify/static": "^10.1.2",
+    "fastify": "^5.2.1",
+    "yaml": "^2.7.0"
+  }
+}

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="Deep analysis of a server's TLS configuration: protocols, cipher suites, certificate chain, known weaknesses and a letter grade" id="meta-description">
+  <meta name="robots" content="index, follow">
+  <title>SSL Test — deep analysis of a server's TLS configuration</title>
+  <link rel="canonical" href="/" id="link-canonical">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SSL Test">
+  <meta property="og:url" content="/" id="og-url">
+  <meta property="og:locale" content="en_GB" id="og-locale">
+  <meta property="og:title" content="SSL Test — deep analysis of a server's TLS configuration" id="og-title">
+  <meta property="og:description" content="Protocols, cipher suites, certificate chain, known weaknesses and a letter grade" id="og-description">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="SSL Test" id="twitter-title">
+  <meta name="twitter:description" content="Protocols, cipher suites, certificate chain, known weaknesses and a letter grade" id="twitter-description">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%92%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="logo">🔒</div>
+      <div>
+        <h1 data-i18n="h1">SSL Test</h1>
+        <div class="sub" data-i18n="subtitle"></div>
+      </div>
+    </div>
+    <div class="tools">
+      <select id="lang" aria-label="Language"></select>
+      <button id="btn-rescan"><span aria-hidden="true">↻</span><span data-i18n="btn_rescan"></span></button>
+      <button id="btn-copy-json"><span aria-hidden="true">⧉</span><span data-i18n="btn_copy_json"></span></button>
+      <button id="btn-save-json"><span aria-hidden="true">↓</span><span data-i18n="btn_save_json"></span></button>
+      <a class="ghlink" href="https://github.com/sharapov-outsource/myssl"
+         target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </header>
+
+  <form class="search" id="search-form">
+    <input id="search-host" type="text" inputmode="url" spellcheck="false" autocomplete="off"
+           placeholder="example.com · example.com:8443" aria-label="Host">
+    <button type="submit" class="primary" id="btn-scan"><span aria-hidden="true">🔍</span><span data-i18n="btn_scan"></span></button>
+  </form>
+
+  <section class="hero" id="hero">
+    <div class="hero-grade">
+      <div class="grade-badge pending" id="grade-badge">·</div>
+      <div class="grade-caption" data-i18n="hero_grade"></div>
+    </div>
+    <div class="hero-main">
+      <div class="hero-label" data-i18n="hero_label"></div>
+      <div class="host-line">
+        <span class="host" id="hero-host">…</span>
+      </div>
+      <div class="hero-meta" id="hero-meta"></div>
+      <div class="progress" id="progress" hidden>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="progress-label" id="progress-label"></div>
+      </div>
+    </div>
+  </section>
+
+  <div id="alerts"></div>
+
+  <main class="grid" id="report" hidden>
+
+    <section class="card">
+      <h2><span class="ico" aria-hidden="true">📊</span><span data-i18n="card_grade"></span></h2>
+      <div class="meter"><span class="k" data-i18n="k_protocol_support"></span><span class="bar"><i id="bar-protocol"></i></span><span class="v" id="score-protocol"></span></div>
+      <div class="meter"><span class="k" data-i18n="k_key_exchange"></span><span class="bar"><i id="bar-kex"></i></span><span class="v" id="score-kex"></span></div>
+      <div class="meter"><span class="k" data-i18n="k_cipher_strength"></span><span class="bar"><i id="bar-cipher"></i></span><span class="v" id="score-cipher"></span></div>
+      <div class="row"><span class="k" data-i18n="k_total_score"></span><span class="v skeleton" id="score-total"></span></div>
+      <div class="row"><span class="k" data-i18n="k_best_protocol"></span><span class="v skeleton" id="grade-best"></span></div>
+      <div class="row"><span class="k" data-i18n="k_weakest_link"></span><span class="v skeleton" id="grade-weakest"></span></div>
+      <div class="tags" id="grade-caps"></div>
+      <div class="tags" id="grade-warnings"></div>
+      <div class="note" data-i18n="note_grade"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="ico" aria-hidden="true">📜</span><span data-i18n="card_cert"></span></h2>
+      <div class="row"><span class="k" data-i18n="k_common_name"></span><span class="v skeleton big" id="cert-cn"></span></div>
+      <div class="row"><span class="k" data-i18n="k_issuer"></span><span class="v skeleton" id="cert-issuer"></span></div>
+      <div class="row"><span class="k" data-i18n="k_valid_from"></span><span class="v skeleton" id="cert-from"></span></div>
+      <div class="row"><span class="k" data-i18n="k_valid_to"></span><span class="v skeleton" id="cert-to"></span></div>
+      <div class="row"><span class="k" data-i18n="k_key"></span><span class="v skeleton" id="cert-key"></span></div>
+      <div class="row"><span class="k" data-i18n="k_signature"></span><span class="v skeleton" id="cert-sig"></span></div>
+      <div class="row"><span class="k" data-i18n="k_validation"></span><span class="v skeleton" id="cert-validation"></span></div>
+      <div class="row"><span class="k" data-i18n="k_sct"></span><span class="v skeleton" id="cert-sct"></span></div>
+      <div class="row"><span class="k" data-i18n="k_must_staple"></span><span class="v skeleton" id="cert-muststaple"></span></div>
+      <div class="row"><span class="k" data-i18n="k_serial"></span><span class="v skeleton" id="cert-serial"></span></div>
+      <div class="row"><span class="k" data-i18n="k_fingerprint"></span><span class="v skeleton" id="cert-fp"></span></div>
+      <div class="row"><span class="k" data-i18n="k_names"></span><span class="v skeleton" id="cert-names"></span></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="ico" aria-hidden="true">🔗</span><span data-i18n="card_chain"></span></h2>
+      <div class="row"><span class="k" data-i18n="k_trusted"></span><span class="v skeleton" id="chain-trusted"></span></div>
+      <div class="row"><span class="k" data-i18n="k_chain_complete"></span><span class="v skeleton" id="chain-complete"></span></div>
+      <div class="row"><span class="k" data-i18n="k_trust_anchor"></span><span class="v skeleton" id="chain-anchor"></span></div>
+      <div class="row"><span class="k" data-i18n="k_trust_store"></span><span class="v skeleton" id="chain-store"></span></div>
+      <div class="row"><span class="k" data-i18n="k_hostname_match"></span><span class="v skeleton" id="chain-host"></span></div>
+      <div class="row"><span class="k" data-i18n="k_ocsp"></span><span class="v skeleton" id="chain-ocsp"></span></div>
+      <div class="row"><span class="k" data-i18n="k_revocation"></span><span class="v skeleton" id="chain-revocation"></span></div>
+      <ol class="chain" id="chain-list"></ol>
+      <div class="tags" id="chain-issues"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="ico" aria-hidden="true">🛡</span><span data-i18n="card_protocols"></span></h2>
+      <div id="protocol-rows"></div>
+      <div class="row"><span class="k" data-i18n="k_negotiated"></span><span class="v skeleton" id="proto-negotiated"></span></div>
+      <div class="note" data-i18n="note_protocols"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="ico" aria-hidden="true">🔑</span><span data-i18n="card_kex"></span></h2>
+      <div class="row"><span class="k" data-i18n="k_groups"></span><span class="v skeleton" id="kex-groups"></span></div>
+      <div class="row"><span class="k" data-i18n="k_ephemeral"></span><span class="v skeleton" id="kex-ephemeral"></span></div>
+      <div class="row"><span class="k" data-i18n="k_dh"></span><span class="v skeleton" id="kex-dh"></span></div>
+      <div class="row"><span class="k" data-i18n="k_pfs"></span><span class="v skeleton" id="kex-pfs"></span></div>
+      <div class="note" data-i18n="note_kex"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="ico" aria-hidden="true">⚙️</span><span data-i18n="card_features"></span></h2>
+      <div class="row"><span class="k" data-i18n="k_alpn"></span><span class="v skeleton" id="f-alpn"></span></div>
+      <div class="row"><span class="k" data-i18n="k_http2"></span><span class="v skeleton" id="f-http2"></span></div>
+      <div class="row"><span class="k" data-i18n="k_ocsp_stapling"></span><span class="v skeleton" id="f-ocsp"></span></div>
+      <div class="row"><span class="k" data-i18n="k_resumption"></span><span class="v skeleton" id="f-resumption"></span></div>
+      <div class="row"><span class="k" data-i18n="k_tickets"></span><span class="v skeleton" id="f-tickets"></span></div>
+      <div class="row"><span class="k" data-i18n="k_ems"></span><span class="v skeleton" id="f-ems"></span></div>
+      <div class="row"><span class="k" data-i18n="k_etm"></span><span class="v skeleton" id="f-etm"></span></div>
+      <div class="row"><span class="k" data-i18n="k_secure_reneg"></span><span class="v skeleton" id="f-reneg"></span></div>
+      <div class="row"><span class="k" data-i18n="k_client_reneg"></span><span class="v skeleton" id="f-client-reneg"></span></div>
+      <div class="row"><span class="k" data-i18n="k_compression"></span><span class="v skeleton" id="f-compression"></span></div>
+      <div class="row"><span class="k" data-i18n="k_fallback"></span><span class="v skeleton" id="f-fallback"></span></div>
+      <div class="row"><span class="k" data-i18n="k_sni"></span><span class="v skeleton" id="f-sni"></span></div>
+      <div class="row"><span class="k" data-i18n="k_client_cert"></span><span class="v skeleton" id="f-clientcert"></span></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="ico" aria-hidden="true">🌐</span><span data-i18n="card_http"></span></h2>
+      <div class="row"><span class="k" data-i18n="k_http_status"></span><span class="v skeleton" id="h-status"></span></div>
+      <div class="row"><span class="k" data-i18n="k_http_redirect"></span><span class="v skeleton" id="h-redirect"></span></div>
+      <div class="row"><span class="k" data-i18n="k_hsts"></span><span class="v skeleton" id="h-hsts"></span></div>
+      <div class="row"><span class="k" data-i18n="k_hsts_subdomains"></span><span class="v skeleton" id="h-hsts-sub"></span></div>
+      <div class="row"><span class="k" data-i18n="k_hsts_preload"></span><span class="v skeleton" id="h-hsts-preload"></span></div>
+      <div class="row"><span class="k" data-i18n="k_http3"></span><span class="v skeleton" id="h-http3"></span></div>
+      <div class="row"><span class="k" data-i18n="k_server"></span><span class="v skeleton" id="h-server"></span></div>
+      <div class="sub-head" data-i18n="k_sec_headers"></div>
+      <div id="h-headers" class="kvlist"></div>
+      <div class="sub-head" data-i18n="k_cookies"></div>
+      <div id="h-cookies" class="kvlist"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="ico" aria-hidden="true">📇</span><span data-i18n="card_dns"></span></h2>
+      <div class="row"><span class="k" data-i18n="k_ipv4"></span><span class="v skeleton" id="d-a"></span></div>
+      <div class="row"><span class="k" data-i18n="k_ipv6"></span><span class="v skeleton" id="d-aaaa"></span></div>
+      <div class="row"><span class="k" data-i18n="k_ptr"></span><span class="v skeleton" id="d-ptr"></span></div>
+      <div class="row"><span class="k" data-i18n="k_caa"></span><span class="v skeleton" id="d-caa"></span></div>
+      <div class="row"><span class="k" data-i18n="k_caa_match"></span><span class="v skeleton" id="d-caa-match"></span></div>
+      <div class="note" data-i18n="note_caa"></div>
+    </section>
+
+    <section class="card wide">
+      <h2><span class="ico" aria-hidden="true">⚠️</span><span data-i18n="card_vulns"></span></h2>
+      <div id="vuln-list" class="findings"></div>
+      <div class="note" data-i18n="note_vulns"></div>
+    </section>
+
+    <section class="card wide">
+      <h2><span class="ico" aria-hidden="true">🧮</span><span data-i18n="card_ciphers"></span></h2>
+      <div id="cipher-blocks"></div>
+      <div class="note" data-i18n="note_ciphers"></div>
+    </section>
+
+    <section class="card wide">
+      <h2><span class="ico" aria-hidden="true">🤝</span><span data-i18n="card_sim"></span></h2>
+      <div class="table-wrap">
+        <table class="table" id="sim-table">
+          <thead><tr>
+            <th data-i18n="th_client"></th>
+            <th data-i18n="th_protocol"></th>
+            <th data-i18n="th_cipher"></th>
+            <th data-i18n="th_group"></th>
+          </tr></thead>
+          <tbody id="sim-body"></tbody>
+        </table>
+      </div>
+      <div class="note" data-i18n="note_sim"></div>
+    </section>
+
+    <section class="card wide">
+      <h2><span class="ico" aria-hidden="true">🧾</span><span data-i18n="card_raw"></span></h2>
+      <pre class="raw" id="raw-json">…</pre>
+    </section>
+
+  </main>
+
+  <section class="empty" id="empty">
+    <p data-i18n="empty_hint"></p>
+    <div class="examples" id="examples"></div>
+  </section>
+
+  <footer>
+    <p id="api-hint"></p>
+    <p><span data-i18n="footer1"></span><br><span data-i18n="footer2"></span><br><span data-i18n="footer3"></span></p>
+    <a class="footer-credit" href="https://sharapov.biz"
+       target="_blank" rel="noopener noreferrer" aria-label="Sharapov">
+      <img src="/static/sharapov.svg" alt="Sharapov" width="72" height="16">
+    </a>
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/static/i18n.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

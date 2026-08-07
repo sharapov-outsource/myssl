@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log*
+.git
+.github
+.idea
+.vscode
+.DS_Store
+*.log
+README.md
+test
+deploy
+.claude
+.junie
