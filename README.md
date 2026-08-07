@@ -2,10 +2,10 @@
 
 **Русская версия — [ниже](#русская-версия).**
 
-A service that analyses how a server speaks TLS: which protocol versions it
-accepts, which cipher suites and in what order, what its certificate chain looks
-like, which known weaknesses its configuration implies, and a letter grade that
-says what all of it adds up to. Works both as a page and as an API.
+TLS configuration scanner. Reports which protocol versions and cipher suites a
+server accepts, what its certificate chain looks like, which known weaknesses
+follow from that configuration, and an overall grade. Works as a page and as an
+API.
 
 ```
 https://myssl.sharapov.biz                         the page
@@ -15,88 +15,76 @@ https://myssl.sharapov.biz/example.com?output=json data instead of the page
 https://myssl.sharapov.biz/api/example.com?output=yaml
 ```
 
-Built the same way as [myip](https://github.com/sharapov-outsource/myip): one
-small Fastify server, no build step, no database, a page that works without a
-framework.
-
 ## What it checks
 
 | Section | Contents |
 | --- | --- |
-| Protocols | SSL 2.0, SSL 3.0, TLS 1.0, 1.1, 1.2, 1.3 — each asked for separately |
-| Cipher suites | Every accepted suite per protocol version, in the order the server picks them, plus whether the server enforces its own preference |
-| Key exchange | Supported groups in the server's preferred order, finite-field DH modulus size, the ephemeral key actually negotiated |
+| Protocols | SSL 2.0, SSL 3.0, TLS 1.0, 1.1, 1.2, 1.3 — each requested separately |
+| Cipher suites | Every accepted suite per protocol version, in the order the server picks them, and whether the server enforces its own preference |
+| Key exchange | Supported groups in the server's preferred order, finite-field DH modulus size, the negotiated ephemeral key |
 | Certificate | Subject, issuer, validity, key type and strength, signature algorithm, SANs, validation level (DV/OV/EV), Certificate Transparency, must-staple, serial, fingerprints, SPKI pin |
-| Chain | Order, completeness, signatures, trust anchor and the store it came from, missing or superfluous intermediates, host name match, stapled OCSP status |
+| Chain | Order, completeness, signatures, trust anchor and its store, missing or superfluous intermediates, host name match, stapled OCSP status |
 | Features | ALPN and HTTP/2, OCSP stapling, session resumption and tickets, extended master secret, encrypt-then-MAC, secure renegotiation, client-initiated renegotiation, TLS compression, `TLS_FALLBACK_SCSV`, whether SNI is required, client certificate requests |
 | Weaknesses | DROWN, POODLE, BEAST, FREAK, Logjam, Sweet32, RC4, NULL/anonymous suites, CRIME, Heartbleed, insecure renegotiation, renegotiation DoS, ROBOT, Lucky 13, missing downgrade protection, missing forward secrecy, weak DH |
 | HTTP | Status and redirect chain, HSTS with all its flags, security headers, cookie flags, HTTP/3 advertisement, `Server` header |
-| DNS | A, AAAA, reverse DNS, CAA — including whether CAA covers the authority that actually issued the certificate |
+| DNS | A, AAAA, reverse DNS, CAA — including whether CAA covers the authority that issued the certificate |
 | Clients | 13 client profiles (Chrome, Firefox, Safari, Edge, Android, iOS, OpenSSL, Java 8 and 17, Python, Windows 7 and XP) — what each would negotiate, or why it cannot connect |
 
-## How it works
+A scan takes 5–20 seconds and opens a few dozen TCP connections to the target.
 
-Node's own `tls` module cannot answer most of these questions: it will not offer
-a single cipher suite of your choosing, it hides SSL 3.0 entirely, it cannot walk
-TLS 1.3 suites one at a time, and it never shows the raw certificate chain
-exactly as the server sent it. So `server/tls-probe.js` assembles ClientHello
-messages by hand, writes them to a plain TCP socket and parses the server's
-answer up to ServerHelloDone — or up to ServerHello for TLS 1.3, where everything
-after it is already encrypted.
+## How the scanner works
 
-No handshake is ever completed by the prober: no keys are derived, no application
-data is sent. Each probe is one TCP connection, closed as soon as the interesting
-bytes have arrived. Everything the prober cannot see — the certificate of a
-TLS 1.3-only server, ALPN in TLS 1.3, session resumption — is measured with a
-real handshake in `server/node-tls.js`.
+ClientHello messages are assembled by hand and written to a plain TCP socket
+(`server/tls-probe.js`). A TLS library cannot offer a single cipher suite of your
+choosing, cannot reach SSL 3.0, cannot walk TLS 1.3 suites one at a time, and
+does not expose the chain exactly as the server sent it.
 
-Cipher enumeration works the way sslscan and testssl.sh do it: a server picks one
-suite out of what the client offers, so offering everything, removing whatever
-came back and asking again walks the whole list. Groups are enumerated the same
-way — in TLS 1.3 by sending no key share at all, which makes the server name its
-preferred group in a HelloRetryRequest.
-
-### What it deliberately does not do
-
-Every verdict comes from configuration the server volunteers during an ordinary
-handshake. Nothing is confirmed by attacking the server: no malformed heartbeat,
-no padding-oracle probing, no forced downgrade with real traffic. Where that
-leaves genuine doubt the finding says `possible` instead of pretending to be
-sure — Heartbleed (a patched OpenSSL still advertises the extension) and ROBOT
-(RSA key transport is a precondition, not a proof) are the two cases where this
-matters most.
+* No handshake is completed by the prober: no keys are derived, no application
+  data is sent. Each probe is one connection, closed after the server's first
+  flight — ServerHelloDone, or ServerHello for TLS 1.3.
+* Cipher suites are enumerated by offering everything, removing whatever came
+  back, and asking again. Groups the same way; in TLS 1.3 by sending no key
+  share, which makes the server name its preferred group in a HelloRetryRequest.
+* What the prober cannot see — the certificate of a TLS 1.3-only server, ALPN in
+  TLS 1.3, session resumption — is measured with a real handshake
+  (`server/node-tls.js`).
+* Nothing is confirmed by attacking the server: no malformed heartbeat, no
+  padding-oracle probing, no forced downgrade. Findings that cannot be settled
+  that way are reported as `possible` rather than `vulnerable` — Heartbleed and
+  ROBOT are the two such cases.
 
 ## Trust anchors
 
-Whether a certificate is trusted must not depend on the machine the scanner runs
-on — and with Node it otherwise does, because some builds consult the operating
-system store. So the chain is walked against stores this repository controls:
+The chain is walked against stores in this repository, not against the host's
+system store, so the verdict does not change with the machine:
 
 * **`mozilla`** — the CA list Node ships with, which is what browsers use.
-* **`server/roots/*.pem`** — extra anchors no browser carries. A chain that ends
-  there is reported as trusted, with `trustStore` naming the store and a
-  `trusted-by-extra-root` warning that keeps it away from an A+, because a
-  browser with nothing installed will still refuse the site.
+* **`server/roots/*.pem`** — extra anchors. A chain ending there is reported as
+  trusted, with `trustStore` naming the store and a `trusted-by-extra-root`
+  warning that keeps it below A+.
 
 One extra store ships with the service: the national CA of the Russian Ministry
-of Digital Development (Минцифры), which Russian banks and state services use —
-`alfabank.ru`, `sberbank.ru` and the like would otherwise come back as **T**. The
-certificates are the ministry's own copies, downloaded from
-<https://www.gosuslugi.ru/crt>, and the file records their fingerprints so they
-can be checked against that source at any time. The root's fingerprint also
-matches the chains alfabank.ru, sberbank.ru and vtb.ru serve, which is an
-independent check on the same bytes. Both the root and the intermediate are
-included, because the ministry distributes both for installation.
+of Digital Development (Минцифры), used by Russian banks and state services —
+without it `alfabank.ru`, `sberbank.ru` and the like are reported as **T**. The
+certificates are the ministry's own copies from <https://www.gosuslugi.ru/crt>;
+the file records their fingerprints. The root is
+`D26D2D0231B7C39F92CC738512BA54103519E4405D68B5BD703E9788CA8ECF31`, which also
+matches the chains those banks serve.
 
-Adding another anchor is dropping a PEM file into `server/roots/` — a corporate
-root, a private CA — or pointing `EXTRA_CA_DIR` somewhere else. The file name
-becomes the store id, so add a `store_<name>` translation for it as well;
-`npm run check:i18n` will insist.
+To add an anchor, drop a PEM file into `server/roots/` or point `EXTRA_CA_DIR`
+elsewhere. The file name becomes the store id, so add a `store_<name>`
+translation too — `npm run check:i18n` requires it.
+
+```json
+"certificate": {
+  "trusted": true,
+  "browserTrusted": false,
+  "trustStore": "russian-trusted-ca",
+  "trustAnchor": "Russian Trusted Root CA"
+}
+```
 
 ## The grade
-
-The rating follows the structure Qualys published in the SSL Server Rating
-Guide: three weighted components, then caps, then a bonus.
 
 ```
 score = 0.30 × protocol support
@@ -104,37 +92,33 @@ score = 0.30 × protocol support
       + 0.40 × cipher strength
 ```
 
-* **Protocol support** — the average of the best and the worst version on offer.
+* **Protocol support** — average of the best and worst version on offer.
   SSL 2.0 scores 0, SSL 3.0 80, TLS 1.0 90, TLS 1.1 95, TLS 1.2 and 1.3 100.
-* **Key exchange** — driven by the weakest key involved: the certificate key, the
-  DH group and the EC group, compared in RSA-equivalent bits.
-* **Cipher strength** — the average of the strongest and weakest accepted suite.
+* **Key exchange** — the weakest key involved: certificate key, DH group, EC
+  group, compared in RSA-equivalent bits.
+* **Cipher strength** — average of the strongest and weakest accepted suite.
 
 `≥ 80 → A`, `≥ 65 → B`, `≥ 50 → C`, `≥ 35 → D`, `≥ 20 → E`, otherwise `F`.
 
-Then the caps apply — SSL 2.0, insecure renegotiation, NULL/anonymous or export
-suites and Logjam drop the result to **F**; TLS compression, Sweet32 and SSL 3.0
-cap it at **C**; RC4, no forward secrecy, a sub-2048-bit DH group and TLS 1.0/1.1
-cap it at **B**. A certificate that browsers will not trust overrides everything
-with **T**, and a name mismatch with **M**.
+Caps: SSL 2.0, insecure renegotiation, NULL/anonymous or export suites and
+Logjam → **F**; TLS compression, Sweet32, SSL 3.0 → **C**; RC4, no forward
+secrecy, DH below 2048 bit, TLS 1.0/1.1 → **B**. An untrusted certificate
+overrides everything with **T**, a name mismatch with **M**.
 
-Finally, an **A** with HSTS of at least 180 days becomes **A+**, provided none of
-the warnings that describe a real risk are present — no TLS 1.3, the heartbeat
-extension, client-initiated renegotiation, no Certificate Transparency, a
-certificate valid for more than 398 days, or trust that depends on an extra root.
-Those turn an **A** into **A-** instead. The remaining warnings (RSA key
-transport, suites without forward secrecy, a needlessly sent root, no OCSP
-stapling) are reported but do not stand in the way of an A+: plenty of well-run
-sites keep them for old clients.
+**A+** requires an A, HSTS of at least 180 days, and none of these warnings: no
+TLS 1.3, heartbeat extension, client-initiated renegotiation, no Certificate
+Transparency, validity over 398 days, trust that depends on an extra root. Those
+give **A-** instead. Other warnings (RSA key transport, some suites without
+forward secrecy, a needlessly sent root, no OCSP stapling) are reported but do
+not block an A+.
 
-This is an independent implementation of a public methodology, updated for what
-matters today. It is not affiliated with, endorsed by, or guaranteed to agree
-with Qualys SSL Labs.
+The rating follows the structure of the Qualys SSL Server Rating Guide. It is an
+independent implementation, not affiliated with Qualys and not guaranteed to
+agree with SSL Labs.
 
 ## API
 
-Everything the page shows is available as data. Console clients (curl, wget,
-httpie, …) get JSON without asking.
+Console clients (curl, wget, httpie, …) get JSON without asking for it.
 
 ```bash
 curl https://myssl.sharapov.biz/example.com               # full report
@@ -155,41 +139,31 @@ curl "https://myssl.sharapov.biz/api/example.com?lang=ru"      # labels in Russi
 | `GET /healthz` | liveness, cache statistics, trust stores, scans in flight |
 
 Query parameters: `output=json|yaml|html`, `port=`, `refresh=1`, `download=1`,
-`lang=`. Both output formats work on every address — the pretty route, the `/api`
-route and the root.
+`lang=`. Both output formats work on every address.
 
-### Readable output
+### Labels
 
-The report is built out of machine codes — `sweet32`, `legacy-tls-versions`,
-`trusted-by-extra-root` — which is right for a data format and unreadable in a
-terminal. So every code is accompanied by a label, in any of the twelve interface
-languages. The codes never move or change, so scripts keep working:
+Every machine code in the report comes with a readable label in any of the
+twelve interface languages. The codes themselves never change, so scripts keep
+working:
 
 ```bash
 curl -s "https://myssl.sharapov.biz/api/badssl.com?lang=de" |
   jq -r '.vulnerabilities[] | select(.status != "safe") |
-         "\(.severityLabel)\t\(.statusLabel)\t\(.name) — \(.description)"'
-```
-
-```
-mittel    verwundbar   Sweet32 — 64-Bit-Blockchiffren (3DES, IDEA, DES) geben …
-kritisch  möglich      Heartbleed — Die Heartbeat-Erweiterung ist aktiv. …
+         "\(.severityLabel)\t\(.statusLabel)\t\(.name)"'
 ```
 
 Labelled fields: `vulnerabilities[].name` / `.description` / `.severityLabel` /
 `.statusLabel`, `grade.caps[].label`, `grade.warningLabels`,
 `certificate.issueLabels`, `certificate.trustStoreLabel`,
 `certificate.leaf.validationLabel`, `certificate.ocsp.certStatusLabel`,
-`ciphers[…].orderLabel` and each suite's `strengthLabel` / `issueLabels`. The
-language used is echoed back in `meta.language`.
+`ciphers[…].orderLabel`, and each suite's `strengthLabel` / `issueLabels`.
+The language used comes back in `meta.language`.
 
-The language comes from `?lang=`, or from `Accept-Language`, or falls back to
-English — error messages included.
+Language selection: `?lang=`, then `Accept-Language`, then English. Error
+messages included.
 
 ### Live progress
-
-A scan takes seconds, so the page follows it over server-sent events rather than
-waiting:
 
 ```bash
 curl -N https://myssl.sharapov.biz/api/stream/example.com
@@ -232,24 +206,6 @@ Events: `start`, `progress`, `report`, `failed`.
 }
 ```
 
-## Languages
-
-Twelve languages: English, Russian, Spanish, Chinese, Hindi, Arabic (with the
-layout mirrored), Portuguese, French, German, Japanese, Turkish and Ukrainian.
-The page picks one from `localStorage`, then from the browser's language list;
-the switcher in the header overrides it.
-
-`public/i18n.js` holds one object per language. To add one, copy `en`, translate
-the values and register the code in `LANG_NAMES` and `LANG_LOCALES`. That one
-file serves both sides: the page reads it as a script, and the server evaluates
-it in a sandbox to label the API output, so a translation can never be right in
-the browser and missing in the JSON.
-
-`npm run check:i18n` fails on any key that drifts apart — including the codes
-built at runtime, which it reads out of `server/vulns.js`, `server/grade.js`,
-`server/cert.js` and the file names in `server/roots/`, so a new finding, a new
-rating cap or a new trust store cannot ship untranslated.
-
 ## Running
 
 ```bash
@@ -281,7 +237,8 @@ The image runs as a non-root user and needs no writable filesystem.
 | `PORT` | `3024` | listening port |
 | `HOSTNAME` | `0.0.0.0` | listening address |
 | `TRUST_PROXY` | `true` | read the client address from `X-Forwarded-For` / `CF-Connecting-IP` |
-| `HSTS` | — | set to `true` to send `Strict-Transport-Security` |
+| `PUBLIC_ORIGIN` | — | fixed origin for canonical and social URLs; taken from the request otherwise |
+| `HSTS` | — | `true` to send `Strict-Transport-Security` |
 | `MAX_INFLIGHT` | `6` | scans allowed to run at once; beyond it callers get a 503 |
 | `RATE_MAX` / `RATE_WINDOW` | `120` / `1 minute` | global rate limit per client |
 | `RATE_SCAN_MAX` / `RATE_SCAN_WINDOW` | `12` / `1 minute` | rate limit on the scan routes |
@@ -294,43 +251,36 @@ The image runs as a non-root user and needs no writable filesystem.
 | `ALLOW_PRIVATE_TARGETS` | `false` | allow scanning private ranges |
 | `LOG_LEVEL` | `info` | pino level |
 
-**Enable `TRUST_PROXY` only behind a reverse proxy.** If the server faces the
-internet directly, a client can put any address in the header and slip past the
-rate limits.
+**Enable `TRUST_PROXY` only behind a reverse proxy.** Facing the internet
+directly, a client can put any address in the header and slip past the limits.
 
 **Leave `ALLOW_PRIVATE_TARGETS` off.** It exists for the tests, which scan a TLS
-server they start on the loopback themselves; in production it turns the service
-into a port scanner for whatever network it runs in.
+server they start on the loopback; in production it turns the service into a port
+scanner for whatever network it runs in.
 
 ## Load protection
 
-A scan opens several dozen connections to the target within a few seconds. To
-keep that from becoming a nuisance to anyone:
-
 * private, loopback, link-local and reserved ranges are refused, and a literal
-  address is checked before any lookup happens;
+  address is checked before any lookup;
 * only well-known TLS ports may be scanned;
-* per-client rate limits, plus a global ceiling on concurrent scans — beyond it
-  callers get a 503 rather than a slow queue;
+* per-client rate limits and a global ceiling on concurrent scans;
 * results are cached for ten minutes, and two requests for the same target that
   arrive together share one scan;
-* every probe has its own timeout and every enumeration loop a hard ceiling on
-  rounds, so a broken server cannot hold a scan open;
-* `robots.txt` allows the home page only, so a crawler cannot turn a walk of the
-  site into a burst of outbound scans.
+* every probe has a timeout and every enumeration loop a ceiling on rounds;
+* `robots.txt` allows the home page only, and report pages carry `noindex`.
 
 Scan only servers you are allowed to test.
 
 ## Deployment
 
-`.github/workflows/deploy.yml` runs on every push to `main`: checks, then a
-Docker image to GHCR, then a pull and restart over SSH with a health check before
-the run is called green.
+`.github/workflows/deploy.yml` runs on every push to `main`: checks, a Docker
+image to GHCR, then a pull and restart over SSH with a health check before the
+run is called green.
 
-The deploy job needs `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`,
-`GHCR_USERNAME` and `GHCR_TOKEN` as secrets or variables, and optionally
-`DEPLOY_PORT`. The container is started read-only, with `no-new-privileges`, a
-memory and PID limit, and bound to `127.0.0.1` for a reverse proxy to pick up.
+Required secrets or variables: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`,
+`GHCR_USERNAME`, `GHCR_TOKEN`, optionally `DEPLOY_PORT`. The container runs
+read-only, with `no-new-privileges`, memory and PID limits, bound to
+`127.0.0.1` for a reverse proxy.
 
 ## Tests
 
@@ -340,17 +290,31 @@ npm run test:unit   # includes two end-to-end scans of a local TLS server
 npm run smoke       # boots the HTTP server and exercises its routes
 ```
 
-The end-to-end tests generate a throwaway self-signed certificate with `openssl`,
-start a TLS server on the loopback interface and scan it, so the whole pipeline —
-protocol detection, cipher walking, certificate analysis, findings, grading — is
-covered without touching the network. They skip themselves if `openssl` is not on
-the path.
+The end-to-end tests generate a self-signed certificate with `openssl`, start a
+TLS server on the loopback and scan it, covering the pipeline from protocol
+detection to grading without touching the network. They skip themselves if
+`openssl` is missing.
+
+## Languages
+
+Twelve: English, Russian, Spanish, Chinese, Hindi, Arabic (layout mirrored),
+Portuguese, French, German, Japanese, Turkish, Ukrainian.
+
+`public/i18n.js` holds one object per language and is the only dictionary: the
+page loads it as a script, the server evaluates it in a sandbox to label API
+output and to fill in the page title, description and `lang` per request. To add
+a language, copy `en`, translate the values, register the code in `LANG_NAMES`
+and `LANG_LOCALES`.
+
+`npm run check:i18n` fails on any key that drifts apart, including runtime codes
+read from `server/vulns.js`, `server/grade.js`, `server/cert.js` and the file
+names in `server/roots/`.
 
 ## Layout
 
 ```
 server/
-  index.js        Fastify: routes, output formats, SSE, rate limits, headers
+  index.js        Fastify: routes, output formats, SSE, rate limits, headers, page rendering
   scan.js         orchestration, caching, target validation, progress events
   tls-probe.js    hand-written ClientHello/ServerHello over a raw socket
   enumerate.js    scanning strategies built on the prober
@@ -359,28 +323,27 @@ server/
   trust.js        trust anchors: the Mozilla list plus anything in roots/
   roots/          extra trust anchors in PEM, one store per file
   cert.js         certificate and chain analysis
-  asn1.js         a very small DER reader for what X509Certificate hides
+  asn1.js         a small DER reader for what X509Certificate does not expose
   http-probe.js   HSTS, redirects, security headers, cookies
   dns-probe.js    A, AAAA, PTR, CAA
   vulns.js        known weaknesses, derived from the observed configuration
   grade.js        the letter grade
-  i18n.js         labels for the API, read from the page's own dictionary
-public/           the page: no framework, no build step
-scripts/          CLI scan, smoke test, translation check
+  i18n.js         labels for the API and the page head
+public/           the page and its assets; no framework, no build step
+scripts/          CLI scan, smoke test, translation check, icon generator
 test/             unit tests and end-to-end scans of a local server
 ```
 
 ## Limitations
 
-* Ticketbleed, Zombie POODLE, GOLDENDOODLE and the other padding-oracle variants
-  are not covered, because detecting them means sending deliberately malformed
-  records to somebody else's server.
-* Revocation is read from a stapled OCSP response when there is one; no OCSP
-  request and no CRL download is made.
-* One address is scanned per host — the rest are listed but not visited.
-* Client profiles are approximations of what those clients offer, close enough to
-  answer whether they can still connect, not byte-exact replicas.
-* Certificate Transparency is counted, not verified against the logs.
+* Ticketbleed, Zombie POODLE, GOLDENDOODLE and other padding-oracle variants are
+  not covered: detecting them requires sending malformed records.
+* Revocation is read from a stapled OCSP response when present; no OCSP request
+  and no CRL download is made.
+* One address is scanned per host; the rest are listed but not visited.
+* Client profiles approximate what those clients offer — enough to answer
+  whether they can connect, not byte-exact replicas.
+* Certificate Transparency timestamps are counted, not verified against logs.
 
 ## License
 
@@ -390,10 +353,10 @@ MIT.
 
 ## Русская версия
 
-Сервис, который разбирает, как сервер работает по TLS: какие версии протокола он
-принимает, какие шифронаборы и в каком порядке, как выглядит цепочка
-сертификатов, какие известные слабости следуют из его настроек и какая в итоге
-получается оценка. Работает и как страница, и как API.
+Сканер конфигурации TLS. Показывает, какие версии протокола и шифронаборы
+принимает сервер, как выглядит цепочка сертификатов, какие известные слабости
+следуют из этих настроек, и выставляет общую оценку. Работает как страница и как
+API.
 
 ```
 https://myssl.sharapov.biz                         страница
@@ -403,9 +366,6 @@ https://myssl.sharapov.biz/example.com?output=json данные вместо с�
 https://myssl.sharapov.biz/api/example.com?output=yaml
 ```
 
-Сделан так же, как [myip](https://github.com/sharapov-outsource/myip): один
-небольшой сервер на Fastify, без сборки, без базы, страница без фреймворков.
-
 ### Что проверяется
 
 | Раздел | Содержимое |
@@ -414,77 +374,67 @@ https://myssl.sharapov.biz/api/example.com?output=yaml
 | Шифронаборы | Все принимаемые наборы по каждой версии, в порядке выбора сервера, и есть ли у сервера собственный приоритет |
 | Обмен ключами | Поддерживаемые группы в порядке предпочтения сервера, размер модуля классического DH, согласованный эфемерный ключ |
 | Сертификат | Субъект, издатель, срок действия, тип и стойкость ключа, алгоритм подписи, SAN, уровень проверки (DV/OV/EV), Certificate Transparency, must-staple, серийный номер, отпечатки, SPKI-пин |
-| Цепочка | Порядок, полнота, подписи, корень доверия и хранилище, из которого он взят, недостающие и лишние промежуточные, совпадение имени хоста, прикреплённый OCSP |
+| Цепочка | Порядок, полнота, подписи, корень доверия и его хранилище, недостающие и лишние промежуточные, совпадение имени хоста, прикреплённый OCSP |
 | Возможности | ALPN и HTTP/2, OCSP stapling, возобновление сессий и тикеты, extended master secret, encrypt-then-MAC, безопасное пересогласование, пересогласование по инициативе клиента, сжатие TLS, `TLS_FALLBACK_SCSV`, обязательность SNI, запрос клиентского сертификата |
 | Слабости | DROWN, POODLE, BEAST, FREAK, Logjam, Sweet32, RC4, наборы NULL и анонимные, CRIME, Heartbleed, небезопасное пересогласование, DoS через пересогласование, ROBOT, Lucky 13, отсутствие защиты от понижения, отсутствие прямой секретности, слабый DH |
 | HTTP | Статус и цепочка редиректов, HSTS со всеми флагами, заголовки безопасности, флаги кук, объявление HTTP/3, заголовок `Server` |
-| DNS | A, AAAA, обратная зона, CAA — включая то, покрывает ли CAA центр, который на самом деле выпустил сертификат |
+| DNS | A, AAAA, обратная зона, CAA — включая то, покрывает ли CAA центр, выпустивший сертификат |
 | Клиенты | 13 профилей (Chrome, Firefox, Safari, Edge, Android, iOS, OpenSSL, Java 8 и 17, Python, Windows 7 и XP) — что согласует каждый или почему не подключится |
 
-### Как это устроено
+Скан занимает 5–20 секунд и открывает к цели несколько десятков TCP-соединений.
 
-Штатный модуль `tls` в Node на большинство этих вопросов ответить не может: он не
-предложит один выбранный шифронабор, полностью скрывает SSL 3.0, не умеет
-перебирать наборы TLS 1.3 по одному и никогда не показывает цепочку ровно в том
-виде, в каком её прислал сервер. Поэтому `server/tls-probe.js` собирает
-сообщения ClientHello вручную, пишет их в обычный TCP-сокет и разбирает ответ
-сервера до ServerHelloDone — или до ServerHello в TLS 1.3, где всё дальнейшее уже
-зашифровано.
+### Как работает сканер
 
-Прощупыватель никогда не доводит рукопожатие до конца: ключи не выводятся,
-прикладные данные не отправляются. Каждая проба — одно TCP-соединение, которое
-закрывается, как только пришли нужные байты. Всё, что прощупыватель увидеть не
-может — сертификат сервера, работающего только по TLS 1.3, ALPN в TLS 1.3,
-возобновление сессий, — измеряется настоящим рукопожатием в
-`server/node-tls.js`.
+Сообщения ClientHello собираются вручную и пишутся в обычный TCP-сокет
+(`server/tls-probe.js`). Библиотечный клиент не позволяет предложить один
+выбранный шифронабор, не умеет в SSL 3.0, не перебирает наборы TLS 1.3 по одному
+и не отдаёт цепочку ровно в том виде, в каком её прислал сервер.
 
-Перебор шифронаборов устроен так же, как в sslscan и testssl.sh: сервер выбирает
-один набор из предложенных, поэтому достаточно предложить всё, убрать выбранное и
-спросить снова — так обходится весь список. Группы перебираются тем же приёмом, а
-в TLS 1.3 — отправкой пустого key share, после которой сервер сам называет
-предпочитаемую группу в HelloRetryRequest.
-
-#### Чего сервис намеренно не делает
-
-Любой вывод получен из настроек, которые сервер сообщает сам при обычном
-рукопожатии. Ничего не подтверждается атакой: ни некорректного heartbeat, ни
-зондирования оракула дополнения, ни принудительного понижения версии настоящим
-трафиком. Там, где из-за этого остаётся сомнение, находка честно говорит
-«возможно», а не делает вид, что уверена: так обстоит дело с Heartbleed
-(пропатченный OpenSSL тоже объявляет расширение) и ROBOT (обмен ключами через RSA
-— предпосылка, а не доказательство).
+* Прощупыватель не доводит рукопожатие до конца: ключи не выводятся, прикладные
+  данные не отправляются. Каждая проба — одно соединение, закрываемое после
+  первой порции ответа сервера: ServerHelloDone или ServerHello для TLS 1.3.
+* Шифронаборы перебираются так: предложить всё, убрать выбранное, спросить снова.
+  Группы — тем же приёмом, а в TLS 1.3 отправкой пустого key share, после которой
+  сервер сам называет предпочитаемую группу в HelloRetryRequest.
+* То, что прощупыватель увидеть не может — сертификат сервера только с TLS 1.3,
+  ALPN в TLS 1.3, возобновление сессий, — измеряется настоящим рукопожатием
+  (`server/node-tls.js`).
+* Ничего не подтверждается атакой на сервер: ни некорректного heartbeat, ни
+  зондирования оракула дополнения, ни принудительного понижения версии. Находки,
+  которые иначе не проверить, помечаются как «возможно», а не «уязвим» — это
+  случай Heartbleed и ROBOT.
 
 ### Корни доверия
 
-Доверие к сертификату не должно зависеть от машины, на которой запущен сканер, —
-а в Node зависит, потому что некоторые сборки обращаются к системному хранилищу.
-Поэтому цепочка строится по хранилищам, которые контролирует репозиторий:
+Цепочка строится по хранилищам из репозитория, а не по системному хранилищу
+машины, поэтому вердикт не зависит от того, где запущен сканер:
 
-* **`mozilla`** — список УЦ, который поставляется с Node; именно им пользуются
-  браузеры;
-* **`server/roots/*.pem`** — дополнительные корни, которых нет ни в одном
-  браузере. Цепочка, заканчивающаяся здесь, считается доверенной, поле
-  `trustStore` называет хранилище, а предупреждение `trusted-by-extra-root` не
-  даёт получить A+: браузер без доустановки корня сайт всё равно не откроет.
+* **`mozilla`** — список УЦ, поставляемый с Node; им пользуются браузеры.
+* **`server/roots/*.pem`** — дополнительные корни. Цепочка, заканчивающаяся
+  здесь, считается доверенной, поле `trustStore` называет хранилище, а
+  предупреждение `trusted-by-extra-root` не даёт подняться до A+.
 
 Одно такое хранилище идёт в комплекте — национальный УЦ Минцифры России, которым
 пользуются банки и госсервисы: без него `alfabank.ru`, `sberbank.ru` и подобные
-получали бы **T**. Сертификаты взяты из копий самого министерства, скачанных с
-<https://www.gosuslugi.ru/crt>; в файле записаны их отпечатки, чтобы в любой
-момент можно было сверить. Отпечаток корня совпадает и с цепочками, которые
-отдают alfabank.ru, sberbank.ru и vtb.ru, — это независимая проверка тех же
-байтов. Включены и корневой, и промежуточный: министерство раздаёт для установки
-оба.
+получают **T**. Сертификаты — копии самого министерства с
+<https://www.gosuslugi.ru/crt>, их отпечатки записаны в файле. Отпечаток корня —
+`D26D2D0231B7C39F92CC738512BA54103519E4405D68B5BD703E9788CA8ECF31`, он же
+совпадает с цепочками, которые отдают эти банки.
 
-Добавить свой корень — положить PEM-файл в `server/roots/` (корпоративный,
-частный УЦ) или указать другой каталог в `EXTRA_CA_DIR`. Имя файла становится
-идентификатором хранилища, так что нужен и перевод `store_<имя>` —
-`npm run check:i18n` об этом напомнит.
+Чтобы добавить свой корень, положите PEM-файл в `server/roots/` или укажите
+другой каталог в `EXTRA_CA_DIR`. Имя файла становится идентификатором хранилища,
+поэтому нужен и перевод `store_<имя>` — `npm run check:i18n` это требует.
+
+```json
+"certificate": {
+  "trusted": true,
+  "browserTrusted": false,
+  "trustStore": "russian-trusted-ca",
+  "trustAnchor": "Russian Trusted Root CA"
+}
+```
 
 ### Оценка
-
-Оценка построена по структуре методики SSL Server Rating Guide от Qualys: три
-взвешенные составляющие, затем ограничения, затем бонус.
 
 ```
 балл = 0,30 × поддержка протоколов
@@ -494,37 +444,31 @@ https://myssl.sharapov.biz/api/example.com?output=yaml
 
 * **Поддержка протоколов** — среднее между лучшей и худшей предлагаемой версией.
   SSL 2.0 даёт 0, SSL 3.0 — 80, TLS 1.0 — 90, TLS 1.1 — 95, TLS 1.2 и 1.3 — 100.
-* **Обмен ключами** — по самому слабому задействованному ключу: ключ сертификата,
-  группа DH и группа EC, приведённые к эквиваленту RSA в битах.
-* **Стойкость шифров** — среднее между самым сильным и самым слабым из принятых
-  наборов.
+* **Обмен ключами** — по самому слабому ключу: ключ сертификата, группа DH,
+  группа EC, приведённые к эквиваленту RSA в битах.
+* **Стойкость шифров** — среднее между самым сильным и самым слабым набором.
 
 `≥ 80 → A`, `≥ 65 → B`, `≥ 50 → C`, `≥ 35 → D`, `≥ 20 → E`, иначе `F`.
 
-Дальше действуют ограничения: SSL 2.0, небезопасное пересогласование, наборы NULL
-и анонимные, экспортные наборы и Logjam опускают результат до **F**; сжатие TLS,
-Sweet32 и SSL 3.0 ограничивают его буквой **C**; RC4, отсутствие прямой
-секретности, группа DH меньше 2048 бит и TLS 1.0/1.1 — буквой **B**. Сертификат,
-которому браузеры не доверяют, перекрывает всё оценкой **T**, а несовпадение
-имени — оценкой **M**.
+Ограничения: SSL 2.0, небезопасное пересогласование, наборы NULL и анонимные,
+экспортные наборы, Logjam → **F**; сжатие TLS, Sweet32, SSL 3.0 → **C**; RC4,
+отсутствие прямой секретности, DH меньше 2048 бит, TLS 1.0/1.1 → **B**.
+Недоверенный сертификат перекрывает всё оценкой **T**, несовпадение имени — **M**.
 
-Наконец, **A** с HSTS не короче 180 дней превращается в **A+** — если нет ни
-одного предупреждения, которое описывает настоящий риск: не включён TLS 1.3,
-включено расширение heartbeat, разрешено пересогласование клиентом, нет
-Certificate Transparency, сертификат выдан более чем на 398 дней или доверие
-держится на дополнительном корне. Такие предупреждения превращают **A** в **A−**.
-Остальные (обмен ключами через RSA, часть наборов без прямой секретности, лишний
-корневой сертификат, отсутствие OCSP stapling) показываются, но получить A+ не
-мешают: их держат у себя многие хорошо настроенные сайты ради старых клиентов.
+**A+** требует A, HSTS не короче 180 дней и отсутствия предупреждений: не включён
+TLS 1.3, расширение heartbeat, пересогласование клиентом, нет Certificate
+Transparency, срок действия больше 398 дней, доверие через дополнительный корень.
+С ними получается **A−**. Остальные предупреждения (обмен ключами через RSA,
+часть наборов без прямой секретности, лишний корневой сертификат, отсутствие OCSP
+stapling) показываются, но A+ не мешают.
 
-Это независимая реализация публичной методики, обновлённая под сегодняшние
-требования. Она не связана с Qualys SSL Labs, не одобрена ими и не обязана
-совпадать с их результатом.
+Оценка построена по структуре методики Qualys SSL Server Rating Guide. Это
+независимая реализация, не связанная с Qualys и не обязанная совпадать с
+результатом SSL Labs.
 
 ### API
 
-Всё, что показывает страница, доступно как данные. Консольные клиенты (curl,
-wget, httpie и прочие) получают JSON без каких-либо параметров.
+Консольные клиенты (curl, wget, httpie и прочие) получают JSON без параметров.
 
 ```bash
 curl https://myssl.sharapov.biz/example.com               # полный отчёт
@@ -538,49 +482,37 @@ curl "https://myssl.sharapov.biz/api/example.com?lang=ru"      # подписи 
 
 | Маршрут | Назначение |
 | --- | --- |
-| `GET /` | страница (для консольных клиентов — краткая справка по API в JSON) |
+| `GET /` | страница (для консольных клиентов — справка по API в JSON) |
 | `GET /<хост>` | отчёт: страница для браузера, данные для всех остальных |
 | `GET /api/<хост>` | всегда данные |
 | `GET /api/stream/<хост>` | тот же скан как server-sent events, с прогрессом |
 | `GET /healthz` | живость, статистика кэша, хранилища доверия, сканы в работе |
 
-Параметры запроса: `output=json|yaml|html`, `port=`, `refresh=1`, `download=1`,
-`lang=`. Оба формата вывода работают на любом адресе — и на «красивом» маршруте,
-и на `/api`, и на корне.
+Параметры: `output=json|yaml|html`, `port=`, `refresh=1`, `download=1`, `lang=`.
+Оба формата вывода работают на любом адресе.
 
-#### Читаемый вывод
+#### Подписи
 
-Отчёт собран из машинных кодов — `sweet32`, `legacy-tls-versions`,
-`trusted-by-extra-root`. Для формата данных это правильно, а в терминале
-нечитаемо, поэтому рядом с каждым кодом идёт подпись на любом из двенадцати
-языков интерфейса. Сами коды никуда не деваются и не меняются, так что скрипты
-продолжают работать:
+У каждого машинного кода в отчёте есть читаемая подпись на любом из двенадцати
+языков интерфейса. Сами коды не меняются, поэтому скрипты продолжают работать:
 
 ```bash
 curl -s "https://myssl.sharapov.biz/api/badssl.com?lang=ru" |
   jq -r '.vulnerabilities[] | select(.status != "safe") |
-         "\(.severityLabel)\t\(.statusLabel)\t\(.name) — \(.description)"'
-```
-
-```
-средний   уязвим     Sweet32 — 64-битные блочные шифры (3DES, IDEA, DES) …
-критично  возможно   Heartbleed — Расширение heartbeat включено. …
+         "\(.severityLabel)\t\(.statusLabel)\t\(.name)"'
 ```
 
 Поля с подписями: `vulnerabilities[].name` / `.description` / `.severityLabel` /
 `.statusLabel`, `grade.caps[].label`, `grade.warningLabels`,
 `certificate.issueLabels`, `certificate.trustStoreLabel`,
 `certificate.leaf.validationLabel`, `certificate.ocsp.certStatusLabel`,
-`ciphers[…].orderLabel`, а у каждого набора — `strengthLabel` и `issueLabels`.
+`ciphers[…].orderLabel`, у каждого набора — `strengthLabel` и `issueLabels`.
 Использованный язык возвращается в `meta.language`.
 
-Язык берётся из `?lang=`, иначе из `Accept-Language`, иначе английский — включая
-тексты ошибок.
+Выбор языка: `?lang=`, затем `Accept-Language`, затем английский. Тексты ошибок
+тоже.
 
 #### Прогресс в реальном времени
-
-Скан занимает несколько секунд, поэтому страница следит за ним через
-server-sent events, а не ждёт молча:
 
 ```bash
 curl -N https://myssl.sharapov.biz/api/stream/example.com
@@ -623,25 +555,6 @@ data: { …полный отчёт… }
 }
 ```
 
-### Языки
-
-Двенадцать языков: английский, русский, испанский, китайский, хинди, арабский (с
-зеркальной вёрсткой), португальский, французский, немецкий, японский, турецкий и
-украинский. Страница берёт язык из `localStorage`, затем из списка языков
-браузера; переключатель в шапке всё это перекрывает.
-
-В `public/i18n.js` лежит по объекту на язык. Чтобы добавить ещё один, скопируйте
-`en`, переведите значения и зарегистрируйте код в `LANG_NAMES` и `LANG_LOCALES`.
-Один и тот же файл обслуживает обе стороны: страница подключает его как скрипт, а
-сервер исполняет его в песочнице, чтобы подписать вывод API, — так перевод не
-может оказаться правильным в браузере и отсутствующим в JSON.
-
-`npm run check:i18n` падает на любом расхождении ключей — включая коды, которые
-собираются во время работы: скрипт вычитывает их из `server/vulns.js`,
-`server/grade.js`, `server/cert.js` и имён файлов в `server/roots/`, поэтому новая
-находка, новое ограничение оценки или новое хранилище доверия не уедут без
-перевода.
-
 ### Запуск
 
 ```bash
@@ -664,8 +577,8 @@ docker build -t myssl .
 docker run --rm -p 3024:3024 myssl
 ```
 
-Образ запускается под непривилегированным пользователем, писать на диск ему не
-нужно.
+Образ запускается под непривилегированным пользователем, запись на диск ему не
+нужна.
 
 ### Настройки
 
@@ -674,8 +587,9 @@ docker run --rm -p 3024:3024 myssl
 | `PORT` | `3024` | порт |
 | `HOSTNAME` | `0.0.0.0` | адрес прослушивания |
 | `TRUST_PROXY` | `true` | брать адрес клиента из `X-Forwarded-For` / `CF-Connecting-IP` |
+| `PUBLIC_ORIGIN` | — | фиксированный origin для canonical и ссылок в соцсети; иначе берётся из запроса |
 | `HSTS` | — | `true`, чтобы отдавать `Strict-Transport-Security` |
-| `MAX_INFLIGHT` | `6` | сколько сканов может идти одновременно; сверх того — 503 |
+| `MAX_INFLIGHT` | `6` | сколько сканов идёт одновременно; сверх того — 503 |
 | `RATE_MAX` / `RATE_WINDOW` | `120` / `1 minute` | общий лимит запросов на клиента |
 | `RATE_SCAN_MAX` / `RATE_SCAN_WINDOW` | `12` / `1 minute` | лимит на маршруты сканирования |
 | `ALLOWED_PORTS` | 443, 8443, 993, 995, 465, … | порты, которые разрешено проверять |
@@ -690,40 +604,33 @@ docker run --rm -p 3024:3024 myssl
 **`TRUST_PROXY` включайте только за обратным прокси.** Если сервер смотрит в
 интернет напрямую, клиент подставит в заголовок любой адрес и обойдёт лимиты.
 
-**`ALLOW_PRIVATE_TARGETS` оставьте выключенным.** Он существует для тестов,
-которые сканируют TLS-сервер, поднятый ими же на петле; в бою он превращает
-сервис в сканер портов той сети, где он запущен.
+**`ALLOW_PRIVATE_TARGETS` оставьте выключенным.** Он нужен тестам, которые
+сканируют TLS-сервер, поднятый ими же на петле; в бою он превращает сервис в
+сканер портов той сети, где он запущен.
 
 ### Защита от нагрузки
 
-Один скан открывает к цели несколько десятков соединений за считаные секунды.
-Чтобы это никому не мешало:
-
 * приватные, петлевые, link-local и зарезервированные диапазоны отклоняются, а
-  адрес, заданный литералом, проверяется ещё до какого-либо резолва;
+  адрес-литерал проверяется до какого-либо резолва;
 * проверять можно только общеизвестные порты TLS;
-* лимиты на клиента плюс общий потолок одновременных сканов — сверх него клиент
-  получает 503, а не медленную очередь;
-* результаты кэшируются на десять минут, а два одновременных запроса по одной
-  цели делят один скан;
-* у каждой пробы свой таймаут, у каждого цикла перебора — жёсткий предел числа
-  раундов, так что сломанный сервер не удержит скан открытым;
-* `robots.txt` разрешает только главную страницу, чтобы обход краулером не
-  превращался во всплеск исходящих сканов.
+* лимиты на клиента и общий потолок одновременных сканов;
+* результаты кэшируются на десять минут, два одновременных запроса по одной цели
+  делят один скан;
+* у каждой пробы свой таймаут, у каждого цикла перебора — предел числа раундов;
+* `robots.txt` разрешает только главную, у страниц отчётов стоит `noindex`.
 
 Проверяйте только те серверы, которые вам разрешено проверять.
 
 ### Развёртывание
 
 `.github/workflows/deploy.yml` отрабатывает на каждый пуш в `main`: проверки,
-затем сборка образа в GHCR, затем `docker pull` и перезапуск по SSH с проверкой
-здоровья до того, как запуск будет признан успешным.
+сборка образа в GHCR, затем `docker pull` и перезапуск по SSH с проверкой
+здоровья до признания запуска успешным.
 
-Для деплоя нужны секреты или переменные `DEPLOY_HOST`, `DEPLOY_USER`,
-`DEPLOY_SSH_KEY`, `GHCR_USERNAME`, `GHCR_TOKEN` и, при необходимости,
-`DEPLOY_PORT`. Контейнер запускается только для чтения, с `no-new-privileges`,
-ограничениями по памяти и числу процессов, и слушает `127.0.0.1` — дальше его
-подхватывает обратный прокси.
+Нужны секреты или переменные `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`,
+`GHCR_USERNAME`, `GHCR_TOKEN` и, при необходимости, `DEPLOY_PORT`. Контейнер
+запускается только для чтения, с `no-new-privileges`, ограничениями по памяти и
+числу процессов, слушает `127.0.0.1` — дальше обратный прокси.
 
 ### Тесты
 
@@ -733,19 +640,58 @@ npm run test:unit   # включая два сквозных скана лока
 npm run smoke       # поднимает HTTP-сервер и проходит по его маршрутам
 ```
 
-Сквозные тесты создают одноразовый самоподписанный сертификат через `openssl`,
-поднимают TLS-сервер на петлевом интерфейсе и сканируют его — так вся цепочка от
-определения протоколов до подсчёта оценки проверяется без выхода в сеть. Если
-`openssl` в системе нет, тесты пропускают сами себя.
+Сквозные тесты создают самоподписанный сертификат через `openssl`, поднимают
+TLS-сервер на петлевом интерфейсе и сканируют его — вся цепочка от определения
+протоколов до подсчёта оценки проверяется без выхода в сеть. Без `openssl` тесты
+пропускают себя.
+
+### Языки
+
+Двенадцать: английский, русский, испанский, китайский, хинди, арабский
+(с зеркальной вёрсткой), португальский, французский, немецкий, японский,
+турецкий, украинский.
+
+`public/i18n.js` содержит по объекту на язык и является единственным словарём:
+страница подключает его как скрипт, сервер исполняет его в песочнице, чтобы
+подписать вывод API и подставить в голову страницы заголовок, описание и `lang`
+на язык запроса. Чтобы добавить язык, скопируйте `en`, переведите значения,
+зарегистрируйте код в `LANG_NAMES` и `LANG_LOCALES`.
+
+`npm run check:i18n` падает на любом расхождении ключей, включая коды, которые
+вычитываются из `server/vulns.js`, `server/grade.js`, `server/cert.js` и имён
+файлов в `server/roots/`.
+
+### Структура
+
+```
+server/
+  index.js        Fastify: маршруты, форматы вывода, SSE, лимиты, заголовки, отдача страницы
+  scan.js         оркестрация, кэш, валидация цели, события прогресса
+  tls-probe.js    самодельный ClientHello/ServerHello поверх сырого сокета
+  enumerate.js    стратегии перебора поверх прощупывателя
+  suites.js       реестр шифронаборов; свойства выводятся из названий
+  node-tls.js     проверки, которым нужно настоящее рукопожатие
+  trust.js        корни доверия: список Mozilla плюс всё из roots/
+  roots/          дополнительные корни в PEM, файл на хранилище
+  cert.js         разбор сертификата и цепочки
+  asn1.js         небольшой DER-ридер для того, что не отдаёт X509Certificate
+  http-probe.js   HSTS, редиректы, заголовки безопасности, куки
+  dns-probe.js    A, AAAA, PTR, CAA
+  vulns.js        известные слабости, выведенные из наблюдаемых настроек
+  grade.js        итоговая оценка
+  i18n.js         подписи для API и головы страницы
+public/           страница и ассеты; без фреймворков и сборки
+scripts/          скан из консоли, smoke-тест, проверка переводов, генератор иконок
+test/             модульные тесты и сквозные сканы локального сервера
+```
 
 ### Ограничения
 
 * Ticketbleed, Zombie POODLE, GOLDENDOODLE и прочие варианты оракула дополнения
-  не проверяются: чтобы их обнаружить, нужно слать заведомо некорректные записи
-  на чужой сервер.
+  не проверяются: для их обнаружения нужно слать некорректные записи.
 * Отзыв читается из прикреплённого OCSP-ответа, если он есть; запрос к OCSP и
   скачивание CRL не выполняются.
-* На хост сканируется один адрес — остальные перечисляются, но не проверяются.
+* На хост сканируется один адрес, остальные перечисляются, но не проверяются.
 * Профили клиентов — приближения того, что предлагают эти клиенты: достаточно
   точные, чтобы ответить, подключатся ли они, но не побайтовые копии.
 * Метки Certificate Transparency считаются, но не сверяются с логами.
