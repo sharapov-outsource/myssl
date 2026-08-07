@@ -374,7 +374,7 @@ async function runScan(rawHost, { port: defaultPort = 443, onProgress = () => {}
       connections: byVersion.reduce((sum, v) => sum + v.connections, 0),
       cached: false,
       generatedAt: new Date().toISOString(),
-      engine: 'ssltest/1.0',
+      engine: 'myssl/1.0',
       truncated: Date.now() - started > SCAN_TIMEOUT,
     },
   };

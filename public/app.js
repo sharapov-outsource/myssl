@@ -1,5 +1,5 @@
 /**
- * ssltest client.
+ * myssl client.
  *
  * A scan takes seconds rather than milliseconds, so the page opens a
  * server-sent event stream and fills the progress bar as the stages go by,
@@ -18,7 +18,7 @@ const DASH = '—';
 const I18N = window.I18N;
 const SUPPORTED = Object.keys(I18N);
 const RTL = new Set(window.RTL_LANGS || []);
-const STORAGE_KEY = 'ssltest-lang';
+const STORAGE_KEY = 'myssl-lang';
 
 function detectLang() {
   try {
@@ -804,7 +804,7 @@ function initEvents() {
     const blob = new Blob([JSON.stringify(REPORT, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `ssltest-${REPORT.host}-${REPORT.port}.json`;
+    a.download = `myssl-${REPORT.host}-${REPORT.port}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     toast(t('toast_saved'));

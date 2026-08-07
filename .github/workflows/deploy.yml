@@ -1,4 +1,4 @@
-name: ssltest CI/CD
+name: myssl CI/CD
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ssltest-${{ github.ref_name }}
+  group: myssl-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -75,9 +75,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: Prod
     env:
-      CONTAINER: ssltest
+      CONTAINER: myssl
       PORT: 3024
-      ENV_DIR: /opt/ssltest
+      ENV_DIR: /opt/myssl
     steps:
       - name: Validate deploy config
         env:
@@ -110,7 +110,13 @@ jobs:
             docker pull "$IMAGE"
 
             docker network create ft-private >/dev/null 2>&1 || true
-            docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
+
+            # The container this replaces is removed alongside it: the service
+            # used to run as "ssltest", and that one holds the port. The old
+            # name can go from this list once every host has been deployed to.
+            for name in "$CONTAINER" ssltest; do
+              docker rm -f "$name" >/dev/null 2>&1 || true
+            done
 
             ENV_FILE_ARG=""
             if [ -f "$ENV_DIR/.env" ]; then

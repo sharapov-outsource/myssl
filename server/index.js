@@ -1,5 +1,5 @@
 /**
- * ssltest HTTP server.
+ * myssl HTTP server.
  *
  * Routes:
  *   GET /                          the page
@@ -294,7 +294,7 @@ async function runScan(req, reply, rawHost, format) {
     });
     const download = req.query?.download === '1' || req.query?.download === 'true';
     return sendData(reply, format, localizeReport(report, lang), {
-      filename: download ? `ssltest-${report.host}-${report.port}` : undefined,
+      filename: download ? `myssl-${report.host}-${report.port}` : undefined,
     });
   } catch (err) {
     const payload = errorPayload(err, lang);
@@ -347,7 +347,7 @@ app.get('/favicon.ico', { config: { rateLimit: false } }, async (req, reply) =>
 
 /** What a console client sees at the root: how to use the thing. */
 const USAGE = {
-  service: 'ssltest',
+  service: 'myssl',
   usage: {
     scan: 'GET /<host>              — full TLS report (JSON for console clients)',
     api: 'GET /api/<host>          — always data',

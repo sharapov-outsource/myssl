@@ -249,7 +249,7 @@ export function grade(data) {
       warnings,
       blockingWarnings: blocking,
       hsts: hsts?.present ? { maxAge: hsts.maxAge, longEnough: hsts.longEnough } : null,
-      methodology: 'ssltest/1.0, structured after the SSL Labs Server Rating Guide',
+      methodology: 'myssl/1.0, structured after the SSL Labs Server Rating Guide',
     };
   }
 }

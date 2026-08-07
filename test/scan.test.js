@@ -70,7 +70,7 @@ test('a self-signed server is scanned end to end', { skip, timeout: 90000 }, asy
   assert.equal(report.ciphers['TLS 1.2'].order, 'server');
 
   /* --- certificate --- */
-  assert.equal(report.certificate.leaf.commonName, 'ssltest.local');
+  assert.equal(report.certificate.leaf.commonName, 'myssl.local');
   assert.equal(report.certificate.leaf.keyType, 'RSA');
   assert.equal(report.certificate.leaf.keyBits, 2048);
   assert.equal(report.certificate.trusted, false);

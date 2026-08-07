@@ -88,7 +88,7 @@ export function tlsInspect({
       if (!ticket && (triggerTicket || result.protocol === 'TLSv1.3')) {
         if (triggerTicket) {
           const name = servername || host;
-          socket.write(`GET / HTTP/1.1\r\nHost: ${name}\r\nUser-Agent: ssltest\r\nConnection: close\r\n\r\n`);
+          socket.write(`GET / HTTP/1.1\r\nHost: ${name}\r\nUser-Agent: myssl\r\nConnection: close\r\n\r\n`);
           socket.resume();
         }
         const wait = triggerTicket ? 1500 : 300;

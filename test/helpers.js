@@ -19,8 +19,8 @@ export function hasOpenssl() {
  * A throwaway self-signed certificate.
  * @param {object} options { subject, days, keyArgs }
  */
-export function selfSigned({ subject = '/CN=ssltest.local', days = 2, keyArgs = ['rsa:2048'] } = {}) {
-  const dir = mkdtempSync(path.join(os.tmpdir(), 'ssltest-'));
+export function selfSigned({ subject = '/CN=myssl.local', days = 2, keyArgs = ['rsa:2048'] } = {}) {
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'myssl-'));
   const keyPath = path.join(dir, 'key.pem');
   const certPath = path.join(dir, 'cert.pem');
 
@@ -28,7 +28,7 @@ export function selfSigned({ subject = '/CN=ssltest.local', days = 2, keyArgs = 
     'req', '-x509', '-newkey', ...keyArgs, '-nodes',
     '-keyout', keyPath, '-out', certPath, '-days', String(days),
     '-subj', subject,
-    '-addext', 'subjectAltName=DNS:ssltest.local,IP:127.0.0.1',
+    '-addext', 'subjectAltName=DNS:myssl.local,IP:127.0.0.1',
   ], { stdio: 'ignore' });
 
   return {

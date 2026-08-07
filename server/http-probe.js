@@ -45,7 +45,7 @@ function request(url, { timeout = 8000, ip, servername, alpn } = {}) {
       path: target.pathname + target.search,
       headers: {
         host: target.host,
-        'user-agent': process.env.OUTBOUND_USER_AGENT || 'ssltest/1.0 (+https://myssl.sharapov.biz)',
+        'user-agent': process.env.OUTBOUND_USER_AGENT || 'myssl/1.0 (+https://myssl.sharapov.biz)',
         accept: 'text/html,*/*;q=0.8',
         'accept-encoding': 'identity',
         connection: 'close',
