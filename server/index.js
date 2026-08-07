@@ -115,8 +115,14 @@ const inlineScriptHashes = [...INDEX_HTML.matchAll(/<script(?![^>]*\bsrc=)[^>]*>
   .filter(match => !/type=["']application\/ld\+json["']/i.test(match[0]))
   .map(match => `'sha256-${createHash('sha256').update(match[1], 'utf8').digest('base64')}'`);
 
-/** Analytics is the only third party the page talks to. */
+/**
+ * Analytics is the only third party the page talks to. The socket is listed
+ * separately because a policy source carries its scheme: `https://mc.yandex.com`
+ * does not authorise `wss://mc.yandex.com`, which is what the session recorder
+ * opens.
+ */
 const METRIKA = 'https://mc.yandex.ru https://mc.yandex.com';
+const METRIKA_SOCKET = 'wss://mc.yandex.ru wss://mc.yandex.com';
 
 const CSP = [
   "default-src 'self'",
@@ -124,7 +130,7 @@ const CSP = [
   "style-src 'self'",
   `img-src 'self' data: ${METRIKA}`,
   "font-src 'self'",
-  `connect-src 'self' ${METRIKA}`,
+  `connect-src 'self' ${METRIKA} ${METRIKA_SOCKET}`,
   `frame-src ${METRIKA}`,
   "base-uri 'none'",
   "form-action 'none'",

@@ -147,6 +147,8 @@ async function run() {
   check('csp: no unsafe-inline', !csp.includes('unsafe-inline'), csp);
   check('csp: inline script allowed by hash', /script-src[^;]*'sha256-/.test(csp), csp);
   check('csp: fonts are first-party', /font-src 'self'(;|$)/.test(csp), csp);
+  // The session recorder opens a socket, and a scheme is part of a CSP source.
+  check('csp: analytics socket allowed', csp.includes('wss://mc.yandex.ru'), csp);
   check('header nosniff', page.headers.get('x-content-type-options') === 'nosniff');
   check('header X-Frame-Options', page.headers.get('x-frame-options') === 'DENY');
   check('header referrer-policy', Boolean(page.headers.get('referrer-policy')));
