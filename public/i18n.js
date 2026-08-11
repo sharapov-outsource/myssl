@@ -31,6 +31,13 @@ window.LANG_LOCALES = {
 window.I18N = {};
 
 window.I18N.en = {
+  /* The sibling services, named as the rest of the family names them. */
+  svc_myip: "My IP",
+  svc_myssl: "SSL Test",
+  svc_mydns: "DNS Check",
+  svc_mymx: "Mail Check",
+  svc_myheaders: "Headers Check",
+
   title: 'SSL Test — deep analysis of a server\'s TLS configuration',
   title_short: 'SSL Test',
   h1: 'SSL Test',
@@ -388,6 +395,13 @@ window.I18N.en = {
 };
 
 window.I18N.ru = {
+  /* The sibling services, named as the rest of the family names them. */
+  svc_myip: "Мой IP",
+  svc_myssl: "Проверка SSL",
+  svc_mydns: "Проверка DNS",
+  svc_mymx: "Проверка почты",
+  svc_myheaders: "Проверка заголовков",
+
   title: 'SSL Test — подробный разбор настроек TLS на сервере',
   title_short: 'SSL Test',
   h1: 'SSL Test',
@@ -745,6 +759,13 @@ window.I18N.ru = {
 };
 
 window.I18N.es = {
+  /* The sibling services, named as the rest of the family names them. */
+  svc_myip: "Mi IP",
+  svc_myssl: "Prueba SSL",
+  svc_mydns: "Comprobación DNS",
+  svc_mymx: "Comprobación de correo",
+  svc_myheaders: "Comprobación de cabeceras",
+
   title: 'SSL Test — análisis a fondo de la configuración TLS de un servidor',
   title_short: 'SSL Test',
   h1: 'SSL Test',
@@ -1102,6 +1123,13 @@ window.I18N.es = {
 };
 
 window.I18N.zh = {
+  /* The sibling services, named as the rest of the family names them. */
+  svc_myip: "我的 IP",
+  svc_myssl: "SSL 检测",
+  svc_mydns: "DNS 检测",
+  svc_mymx: "邮件检测",
+  svc_myheaders: "响应头检测",
+
   title: 'SSL Test — 深入分析服务器的 TLS 配置',
   title_short: 'SSL Test',
   h1: 'SSL Test',
@@ -1459,6 +1487,13 @@ window.I18N.zh = {
 };
 
 window.I18N.hi = {
+  /* The sibling services, named as the rest of the family names them. */
+  svc_myip: "मेरा IP",
+  svc_myssl: "SSL जाँच",
+  svc_mydns: "DNS जाँच",
+  svc_mymx: "मेल जाँच",
+  svc_myheaders: "हेडर जाँच",
+
   title: 'SSL Test — किसी सर्वर के TLS विन्यास की गहरी जाँच',
   title_short: 'SSL Test',
   h1: 'SSL Test',
@@ -1816,6 +1851,13 @@ window.I18N.hi = {
 };
 
 window.I18N.ar = {
+  /* The sibling services, named as the rest of the family names them. */
+  svc_myip: "عنواني",
+  svc_myssl: "فحص SSL",
+  svc_mydns: "فحص DNS",
+  svc_mymx: "فحص البريد",
+  svc_myheaders: "فحص الترويسات",
+
   title: 'SSL Test — تحليل معمّق لإعدادات TLS على الخادم',
   title_short: 'SSL Test',
   h1: 'SSL Test',
@@ -2173,6 +2215,13 @@ window.I18N.ar = {
 };
 
 window.I18N.pt = {
+  /* The sibling services, named as the rest of the family names them. */
+  svc_myip: "Meu IP",
+  svc_myssl: "Teste SSL",
+  svc_mydns: "Verificação de DNS",
+  svc_mymx: "Verificação de e-mail",
+  svc_myheaders: "Verificação de cabeçalhos",
+
   title: 'SSL Test — análise detalhada da configuração TLS de um servidor',
   title_short: 'SSL Test',
   h1: 'SSL Test',
@@ -2530,6 +2579,13 @@ window.I18N.pt = {
 };
 
 window.I18N.fr = {
+  /* The sibling services, named as the rest of the family names them. */
+  svc_myip: "Mon IP",
+  svc_myssl: "Test SSL",
+  svc_mydns: "Contrôle DNS",
+  svc_mymx: "Contrôle e-mail",
+  svc_myheaders: "Contrôle des en-têtes",
+
   title: 'SSL Test — analyse détaillée de la configuration TLS d\'un serveur',
   title_short: 'SSL Test',
   h1: 'SSL Test',
@@ -2887,6 +2943,13 @@ window.I18N.fr = {
 };
 
 window.I18N.de = {
+  /* The sibling services, named as the rest of the family names them. */
+  svc_myip: "Meine IP",
+  svc_myssl: "SSL-Test",
+  svc_mydns: "DNS-Prüfung",
+  svc_mymx: "Mail-Prüfung",
+  svc_myheaders: "Header-Prüfung",
+
   title: 'SSL Test — gründliche Analyse der TLS-Konfiguration eines Servers',
   title_short: 'SSL Test',
   h1: 'SSL Test',
@@ -3244,6 +3307,13 @@ window.I18N.de = {
 };
 
 window.I18N.ja = {
+  /* The sibling services, named as the rest of the family names them. */
+  svc_myip: "My IP",
+  svc_myssl: "SSL 検査",
+  svc_mydns: "DNS 検査",
+  svc_mymx: "メール検査",
+  svc_myheaders: "ヘッダー検査",
+
   title: 'SSL Test — サーバーの TLS 設定を細かく調べる',
   title_short: 'SSL Test',
   h1: 'SSL Test',
@@ -3601,6 +3671,13 @@ window.I18N.ja = {
 };
 
 window.I18N.tr = {
+  /* The sibling services, named as the rest of the family names them. */
+  svc_myip: "IP’m",
+  svc_myssl: "SSL denetimi",
+  svc_mydns: "DNS denetimi",
+  svc_mymx: "Posta denetimi",
+  svc_myheaders: "Başlık denetimi",
+
   title: 'SSL Test — bir sunucunun TLS yapılandırmasının ayrıntılı incelemesi',
   title_short: 'SSL Test',
   h1: 'SSL Test',
@@ -3958,6 +4035,13 @@ window.I18N.tr = {
 };
 
 window.I18N.uk = {
+  /* The sibling services, named as the rest of the family names them. */
+  svc_myip: "Мій IP",
+  svc_myssl: "Перевірка SSL",
+  svc_mydns: "Перевірка DNS",
+  svc_mymx: "Перевірка пошти",
+  svc_myheaders: "Перевірка заголовків",
+
   title: 'SSL Test — докладний розбір налаштувань TLS на сервері',
   title_short: 'SSL Test',
   h1: 'SSL Test',

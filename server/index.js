@@ -238,13 +238,41 @@ function sendHtml(reply, req, { target } = {}) {
     .replaceAll('%DIR%', RTL_LANGS.includes(lang) ? 'rtl' : 'ltr')
     .replaceAll('%LOCALE%', (LANG_LOCALES[lang] || lang).replace('-', '_'))
     .replaceAll('%TITLE%', escapeHtml(title))
-    .replaceAll('%DESCRIPTION%', escapeHtml(t(lang, 'subtitle')));
+    .replaceAll('%DESCRIPTION%', escapeHtml(t(lang, 'subtitle')))
+    .replaceAll('%SERVICES%', renderServiceLinks(lang));
 
   return reply
     .type('text/html; charset=utf-8')
     .header('cache-control', 'public, max-age=300')
     .header('vary', 'accept, user-agent')
     .send(html);
+}
+
+/**
+ * The strip of sibling services in the footer.
+ *
+ * The list is static on purpose: fetching it would make five independent
+ * containers depend on one another being up, to draw a footer. It is rendered
+ * here rather than by the client so that it is in the markup a crawler reads,
+ * already in the language the request asked for.
+ */
+const SERVICES = [
+  { slug: 'myip', host: 'myip.sharapov.biz', key: 'svc_myip' },
+  { slug: 'myssl', host: 'myssl.sharapov.biz', key: 'svc_myssl' },
+  { slug: 'mydns', host: 'mydns.sharapov.biz', key: 'svc_mydns' },
+  { slug: 'mymx', host: 'mymx.sharapov.biz', key: 'svc_mymx' },
+  { slug: 'myheaders', host: 'myheaders.sharapov.biz', key: 'svc_myheaders' },
+];
+
+function renderServiceLinks(lang) {
+  const items = SERVICES.map(service => {
+    const name = escapeHtml(t(lang, service.key) || service.slug);
+    if (service.slug === 'myssl') {
+      return `<span class="svc current" aria-current="page">${name}</span>`;
+    }
+    return `<a class="svc" href="https://${service.host}/">${name}</a>`;
+  });
+  return `<nav class="services" aria-label="sharapov.biz tools">${items.join('')}</nav>`;
 }
 
 /* ------------------------------------------------------------------ *
