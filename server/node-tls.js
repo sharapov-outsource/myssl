@@ -13,7 +13,7 @@
 
 import tls from 'node:tls';
 
-import { pace } from './pace.js';
+import { pace } from '@sharapov/service-kit';
 
 const DEFAULT_ALPN = ['h2', 'http/1.1'];
 

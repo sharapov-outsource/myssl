@@ -19,7 +19,7 @@ import net from 'node:net';
 import crypto from 'node:crypto';
 
 import { describeSuite } from './suites.js';
-import { pace } from './pace.js';
+import { pace } from '@sharapov/service-kit';
 
 /* ------------------------------------------------------------------ *
  * Constants
