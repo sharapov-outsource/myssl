@@ -253,15 +253,19 @@ h1 {
 
 button, select, input { font: inherit; color: var(--ink) }
 
-button {
+/* The language picker sits in the same toolbar row as the buttons and is one of
+   them as far as a reader is concerned, so it is styled from the same rule
+   rather than a parallel one that drifts. Only the parts a `select` needs of
+   its own — dropping the native control and drawing the caret — are below. */
+button, select {
   font-family: var(--font-body); font-size: 13.5px; font-weight: 500; cursor: pointer;
   background: var(--card); color: var(--ink);
   border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
   padding: 9px 14px; transition: all var(--t-fast);
   display: inline-flex; align-items: center; gap: 8px;
 }
-button:hover { border-color: var(--ink); background: var(--bg-alt) }
-button:active { transform: translateY(1px) }
+button:hover, select:hover { border-color: var(--ink); background: var(--bg-alt) }
+button:active, select:active { transform: translateY(1px) }
 button.primary {
   background: var(--brand); color: var(--on-brand); border-color: transparent;
   font-weight: 600; box-shadow: 0 2px 8px rgba(58, 58, 166, .24);
@@ -270,21 +274,17 @@ button.primary:hover { background: var(--brand-strong); color: var(--on-brand) }
 button:disabled { opacity: .45; cursor: default; transform: none }
 button .mark { font-family: var(--font-mono); font-size: 13px; opacity: .7 }
 
-/* The language switcher borrows the pill from the main site. */
 select {
-  appearance: none; cursor: pointer;
-  font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em;
-  background: var(--card); border: 1px solid var(--line-strong);
-  border-radius: var(--radius-pill); padding: 8px 30px 8px 14px;
-  transition: border-color var(--t-fast);
+  appearance: none;
+  /* Room for the caret, which is drawn rather than native. */
+  padding-right: 32px;
   background-image:
     linear-gradient(45deg, transparent 50%, currentColor 50%),
     linear-gradient(135deg, currentColor 50%, transparent 50%);
-  background-position: right 15px center, right 10px center;
+  background-position: right 17px center, right 12px center;
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
 }
-select:hover { border-color: var(--ink) }
 
 :is(button, select, input):focus-visible { outline: 2px solid var(--brand); outline-offset: 2px }
 
@@ -630,9 +630,13 @@ footer a:hover { text-decoration: underline }
 }
 [dir=rtl] .toast { transform: translate(50%, 20px) }
 [dir=rtl] .toast.show { transform: translate(50%, 0) }
+/* The caret is drawn with background gradients, and a background position has
+   no logical form — so the whole thing, padding included, is mirrored by hand. */
 [dir=rtl] select {
+  padding-right: 14px;
+  padding-left: 32px;
   background-image:
     linear-gradient(-45deg, transparent 50%, currentColor 50%),
     linear-gradient(-135deg, currentColor 50%, transparent 50%);
-  background-position: left 15px center, left 20px center;
+  background-position: left 17px center, left 22px center;
 }
