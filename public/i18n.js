@@ -907,7 +907,7 @@ window.I18N.es = {
   note_protocols: 'Una versión cuenta como admitida solo si el servidor responde a una petición de esa versión exacta.',
   note_kex: 'Los grupos aparecen en el orden que prefiere el servidor. La confidencialidad futura significa que una clave privada robada más tarde no descifra el tráfico grabado antes.',
   note_caa: 'Los registros CAA indican qué autoridades pueden emitir para este dominio. La comparación con el emisor es aproximada.',
-  note_vulns: 'Todo lo de aquí se deduce de la configuración que el propio servidor revela en handshakes normales. Nada se confirma atacándolo, así que algunas comprobaciones solo pueden decir "posible".',
+  note_vulns: 'Todo lo de aquí se deduce de la configuración que el propio servidor revela en handshakes normales. Nada se confirma atacándolo, así que algunas comprobaciones solo pueden decir «posible».',
   note_ciphers: 'Los conjuntos aparecen en el orden en que los eligió el servidor. Con preferencia de servidor, ese es su propio orden.',
   note_sim: 'Aproximaciones de lo que ofrecen estos clientes, suficientes para saber si todavía pueden conectarse.',
 
@@ -1635,7 +1635,7 @@ window.I18N.hi = {
   note_protocols: 'कोई संस्करण तभी समर्थित माना जाता है जब सर्वर ठीक उसी संस्करण के अनुरोध का उत्तर दे।',
   note_kex: 'समूह उसी क्रम में हैं जो सर्वर को पसंद है। फ़ॉरवर्ड सीक्रेसी का अर्थ है कि बाद में चुराई गई निजी कुंजी पहले रिकॉर्ड किए गए ट्रैफ़िक को नहीं खोल सकती।',
   note_caa: 'CAA रिकॉर्ड बताते हैं कि इस डोमेन के लिए कौन से प्राधिकरण प्रमाणपत्र जारी कर सकते हैं। जारीकर्ता से मिलान अनुमानित है।',
-  note_vulns: 'यहाँ सब कुछ उस विन्यास से निकला है जो सर्वर साधारण हैंडशेक में खुद बताता है। किसी बात की पुष्टि सर्वर पर हमला करके नहीं की जाती, इसलिए कुछ जाँचें केवल "संभव" कह पाती हैं।',
+  note_vulns: 'यहाँ सब कुछ उस विन्यास से निकला है जो सर्वर साधारण हैंडशेक में खुद बताता है। किसी बात की पुष्टि सर्वर पर हमला करके नहीं की जाती, इसलिए कुछ जाँचें केवल “संभव” कह पाती हैं।',
   note_ciphers: 'सूट उसी क्रम में हैं जिसमें सर्वर ने उन्हें चुना। सर्वर वरीयता होने पर यही उसका अपना क्रम है।',
   note_sim: 'ये इन क्लाइंटों की पेशकश के अनुमान हैं — इतने सटीक कि बताया जा सके कि वे अब भी जुड़ पाएँगे या नहीं।',
 
@@ -2363,7 +2363,7 @@ window.I18N.pt = {
   note_protocols: 'Uma versão só conta como suportada se o servidor responder a um pedido exatamente daquela versão.',
   note_kex: 'Os grupos aparecem na ordem que o servidor prefere. Sigilo futuro significa que uma chave privada roubada depois não decifra o tráfego gravado antes.',
   note_caa: 'Os registros CAA indicam quais autoridades podem emitir para este domínio. A comparação com o emissor é aproximada.',
-  note_vulns: 'Tudo aqui vem da configuração que o próprio servidor revela em handshakes comuns. Nada é confirmado atacando o servidor, por isso algumas verificações só conseguem dizer "possível".',
+  note_vulns: 'Tudo aqui vem da configuração que o próprio servidor revela em handshakes comuns. Nada é confirmado atacando o servidor, por isso algumas verificações só conseguem dizer “possível”.',
   note_ciphers: 'Os conjuntos aparecem na ordem em que o servidor os escolheu. Com preferência do servidor, essa é a ordem dele.',
   note_sim: 'Aproximações do que esses clientes oferecem — próximas o bastante para dizer se ainda conseguem conectar.',
 
@@ -3091,7 +3091,7 @@ window.I18N.de = {
   note_protocols: 'Eine Version gilt nur dann als unterstützt, wenn der Server auf eine Anfrage genau dieser Version antwortet.',
   note_kex: 'Die Gruppen stehen in der Reihenfolge, die der Server bevorzugt. Forward Secrecy bedeutet, dass ein später gestohlener privater Schlüssel früher aufgezeichneten Verkehr nicht entschlüsselt.',
   note_caa: 'CAA-Einträge nennen die Zertifizierungsstellen, die für diese Domain ausstellen dürfen. Der Abgleich mit dem Aussteller ist ungefähr.',
-  note_vulns: 'Alles hier ergibt sich aus der Konfiguration, die der Server bei gewöhnlichen Handshakes selbst preisgibt. Nichts wird durch einen Angriff bestätigt, deshalb sagen einige Prüfungen nur "möglich".',
+  note_vulns: 'Alles hier ergibt sich aus der Konfiguration, die der Server bei gewöhnlichen Handshakes selbst preisgibt. Nichts wird durch einen Angriff bestätigt, deshalb sagen einige Prüfungen nur „möglich“.',
   note_ciphers: 'Die Suites stehen in der Reihenfolge, in der der Server sie gewählt hat. Bei Serverpräferenz ist das seine eigene Reihenfolge.',
   note_sim: 'Näherungen dessen, was diese Clients anbieten — genau genug für die Frage, ob sie sich noch verbinden können.',
 
@@ -3819,7 +3819,7 @@ window.I18N.tr = {
   note_protocols: 'Bir sürüm, ancak sunucu tam olarak o sürüm için gelen isteğe yanıt verirse destekleniyor sayılır.',
   note_kex: 'Gruplar sunucunun tercih ettiği sırayla listelenir. İleri gizlilik, sonradan çalınan özel anahtarın daha önce kaydedilmiş trafiği çözemeyeceği anlamına gelir.',
   note_caa: 'CAA kayıtları bu alan adı için sertifika verebilecek makamları belirtir. Verenle karşılaştırma yaklaşıktır.',
-  note_vulns: 'Buradaki her şey, sunucunun sıradan el sıkışmalarda kendi verdiği bilgilerden çıkarılır. Hiçbiri sunucuya saldırarak doğrulanmaz; bu yüzden bazı denetimler yalnızca "olası" diyebilir.',
+  note_vulns: 'Buradaki her şey, sunucunun sıradan el sıkışmalarda kendi verdiği bilgilerden çıkarılır. Hiçbiri sunucuya saldırarak doğrulanmaz; bu yüzden bazı denetimler yalnızca “olası” diyebilir.',
   note_ciphers: 'Takımlar sunucunun seçtiği sırayla listelenir. Sunucu tercihi varsa bu, sunucunun kendi sırasıdır.',
   note_sim: 'Bu istemcilerin sunduklarının yaklaşık karşılıkları — hâlâ bağlanabilirler mi sorusuna cevap verecek kadar yakın.',
 
