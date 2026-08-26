@@ -540,7 +540,7 @@ select {
 }
 
 /* ---------- tables ---------- */
-.table-wrap { overflow-x: auto; margin: 4px 0 12px }
+.table-wrap { overflow-x: auto; margin: 4px 0 12px; container-type: inline-size }
 .table { width: 100%; border-collapse: collapse; font-size: 12.5px }
 .table th {
   text-align: start; font-family: var(--font-mono); font-weight: 500;
@@ -559,6 +559,46 @@ select {
 .table .legacy { color: var(--warn) }
 .table .weak { color: var(--bad) }
 .table .insecure { color: var(--crit); font-weight: 600 }
+
+/* A seven-column cipher table does not fit across a phone, and the columns
+   that fall off the right edge read as missing data rather than as something
+   to scroll to — the last thing visible is usually half a suite name.
+   Narrower than this each row becomes a short list instead, every value
+   beside its own column heading, which is how the rest of the page already
+   reads a pair. Two columns are that pair already, so only wider tables are
+   marked to stack; the class and the headings both come from the render
+   pass. */
+@container (max-width: 480px) {
+  .table.stacks, .table.stacks tbody, .table.stacks tr, .table.stacks td { display: block }
+  .table.stacks thead { display: none }
+  .table.stacks tr {
+    padding: 9px 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
+  }
+  .table.stacks tr:last-child { border-bottom: none }
+  .table.stacks td {
+    display: flex; gap: 14px; align-items: baseline;
+    padding: 2px 0; border: none; text-align: end;
+    word-break: break-word; overflow-wrap: anywhere;
+  }
+  /* A column with nothing in it for this row is a line of pure label. */
+  .table.stacks td:empty { display: none }
+  /* A mono cell is forced left-to-right so an address reads in order, but
+     stacked it is the row, and forcing it would put the heading on the wrong
+     side in Arabic. The direction of the value alone is what matters here,
+     and that each run can settle for itself. */
+  .table.stacks td.mono { direction: inherit; unicode-bidi: plaintext }
+  /* A cell spanning columns answers to no single heading, so it gets none.
+     The margin, rather than space-between, keeps a cell of several parts —
+     a client and its platform, say — together at the end of the line. */
+  .table.stacks td[data-label]::before {
+    content: attr(data-label); flex: none; text-align: start;
+    margin-inline-end: auto;
+    font-family: var(--font-mono); font-size: 10.5px;
+    letter-spacing: var(--tracking-eyebrow); text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+}
 
 .cipher-block { margin-bottom: 20px }
 .cipher-block:last-child { margin-bottom: 6px }

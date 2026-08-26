@@ -273,6 +273,36 @@ function render() {
   renderCiphers();
   renderSimulation();
   renderRaw();
+  labelTableCells();
+}
+
+/**
+ * Copies each column heading onto the cells beneath it.
+ *
+ * On a phone a table has no room to be read across, so the stylesheet turns
+ * every row into a short list — and a value on its own line needs to say
+ * which column it came from. Run after the tables are filled, and after the
+ * headings themselves have been translated.
+ */
+function labelTableCells() {
+  for (const table of document.querySelectorAll('.table')) {
+    const heads = [...(table.tHead?.rows[0]?.cells || [])].map(cell => cell.textContent.trim());
+    if (!heads.length) continue;
+    // Two columns are a label beside its value already; only a wider table
+    // gains anything from being taken apart on a narrow screen.
+    table.classList.toggle('stacks', heads.length > 2);
+    for (const body of table.tBodies) {
+      for (const row of body.rows) {
+        let column = 0;
+        for (const cell of row.cells) {
+          // A cell spanning columns answers to no single heading.
+          if (cell.colSpan === 1 && heads[column]) cell.dataset.label = heads[column];
+          else delete cell.dataset.label;
+          column += cell.colSpan;
+        }
+      }
+    }
+  }
 }
 
 function renderAlerts() {
